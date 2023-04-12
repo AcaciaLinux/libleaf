@@ -1,9 +1,9 @@
 all:
-    cargo build --release
+	cargo build --release
 
 clean:
-    cargo clean
+	cargo clean
 
 install: all
-    mkdir -pv $(DESTDIR)/usr/lib/
-    cp -v target/release/libleaf.so $(DESTDIR)/usr/lib/
+	mkdir -pv $(DESTDIR)/usr/lib/
+	cp -v target/release/libleaf.so $(DESTDIR)/usr/lib/
