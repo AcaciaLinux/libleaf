@@ -1,0 +1,14 @@
+[package]
+name = "libleaf"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "leaf"
+crate-type = ["dylib"]
+
+[build-dependencies]
+cbindgen = "0.12"
+
+[dependencies]
+    
