@@ -11,4 +11,5 @@ crate-type = ["lib", "cdylib", "staticlib"]
 cbindgen = "0.24.3"
 
 [dependencies]
+indicatif = "0.17.3"
     

@@ -1,3 +1,4 @@
+mod pbar;
 
 #[repr(C)]
 pub struct LeafConfig {
