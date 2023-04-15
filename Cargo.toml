@@ -5,10 +5,10 @@ edition = "2021"
 
 [lib]
 name = "leaf"
-crate-type = ["dylib"]
+crate-type = ["lib", "cdylib", "staticlib"]
 
 [build-dependencies]
-cbindgen = "0.12"
+cbindgen = "0.24.3"
 
 [dependencies]
     
