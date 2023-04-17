@@ -1,3 +1,5 @@
+
+mod download;
 mod pbar;
 
 #[repr(C)]
