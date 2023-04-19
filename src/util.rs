@@ -1,6 +1,6 @@
 //! Some utility functions to aid the management of the leaf package manager
 
-use crate::{error::*, package::remote::*, Config};
+use crate::{config::Config, error::*, package::remote::*};
 use serde::{Deserialize, Deserializer};
 use std::{fmt::Display, fs::create_dir_all, str::FromStr};
 
