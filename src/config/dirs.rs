@@ -32,6 +32,16 @@ impl Config {
         }
     }
 
+    /// Returns the directory leaf uses for lib files (overrides the `root_dir` default)
+    ///
+    /// Default: `root_dir/lib/leaf`
+    pub fn get_lib_dir(&self) -> PathBuf {
+        match &self.lib_dir {
+            Some(p) => PathBuf::from(p),
+            None => self.get_root().join("lib"),
+        }
+    }
+
     /// Returns the directory where leaf should put its caches (overrides the `root_dir` default)
     ///
     /// Default: `root_dir/var/cache/leaf`

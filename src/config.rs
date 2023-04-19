@@ -1,4 +1,6 @@
 pub mod dirs;
+pub mod ensure_config;
+pub mod files;
 
 use std::path::PathBuf;
 
@@ -17,8 +19,13 @@ pub struct Config {
 
     /// The directory leaf should store its configs in (default: `/etc/leaf/`)
     pub config_dir: Option<PathBuf>,
+    /// The location to search the config file at (default: `/etc/leaf/leaf.conf`)
+    pub config_file: Option<PathBuf>,
     /// The directory leaf should look for and store the mirror files (default: `/etc/leaf/mirrors/`)
     pub mirrors_dir: Option<PathBuf>,
+
+    /// The directory to search for lib files (deafult files) (default: `/lib/leaf`)
+    pub lib_dir: Option<PathBuf>,
 
     /// The directory leaf should store its caches in (default: `/var/cache/leaf/`)
     pub cache_dir: Option<PathBuf>,
@@ -35,7 +42,9 @@ impl Default for Config {
             download_workers: 5,
             root: None,
             config_dir: None,
+            config_file: None,
             mirrors_dir: None,
+            lib_dir: None,
             cache_dir: None,
             download_dir: None,
             packages_dir: None,
