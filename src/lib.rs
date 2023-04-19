@@ -1,31 +1,37 @@
 pub mod config;
+mod download;
 pub mod error;
 pub mod mirror;
 pub mod package;
-pub mod util;
-mod download;
 mod pbar;
+pub mod util;
 
-#[repr(C)]
-pub struct LeafConfig {
-    loglevel: LogLevel,
-    number: u8,
+extern crate pretty_env_logger;
+#[macro_use]
+extern crate log;
+
+use crate::config::*;
+use std::sync::atomic::AtomicBool;
+
+pub static RUNNING: AtomicBool = AtomicBool::new(true);
+
+#[macro_export]
+macro_rules! usermsg {
+    ($($arg:tt)*) => {
+        crate::pbar::println(format!($($arg)*).as_str()).expect("Failed to print above progress bar!")
+    };
 }
 
-#[repr(C)]
-pub enum LogLevel {
-    Verbose,
-    Superverbose,
-    Ultraverbose
+#[macro_export]
+macro_rules! usererr {
+    ($($arg:tt)*) => {
+        crate::pbar::println(format!("\x1B[1;91m{}\x1B[0m", format!($($arg)*))).expect("Failed to print above progress bar!")
+    };
 }
 
-#[no_mangle]
-pub extern "C" fn hello(config: &LeafConfig) {
-    println!("Hello from the leaf library, your number is {}", config.number);
-
-    match config.loglevel{
-        LogLevel::Verbose => println!("Verbose logging enabled!"),
-        LogLevel::Superverbose => println!("Superverbose logging enabled!"),
-        LogLevel::Ultraverbose => println!("Ultraverbose logging enabled!"),
-    }
+#[macro_export]
+macro_rules! userwarn {
+    ($($arg:tt)*) => {
+        crate::pbar::println(format!("\x1B[1;93m{}\x1B[0m", format!($($arg)*))).expect("Failed to print above progress bar!")
+    };
 }
