@@ -8,12 +8,13 @@ use std::{
 
 /// The different types of errors that can occur
 #[repr(C)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum LErrorClass {
     None,
     Unknown,
     Abort,
     CURL,
+    JSON,
     MirrorNotLoaded,
     PackageNotFound,
 
@@ -63,6 +64,7 @@ impl LError {
             Unknown => "Unknown",
             Abort => "Action was aborted",
             CURL => "Error in CURL occured",
+            JSON => "Failed to parse json",
             MirrorNotLoaded => "Mirror was not loaded",
             PackageNotFound => "Package could not be found",
             IO(_) => "An IO error occured",
