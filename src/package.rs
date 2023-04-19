@@ -32,6 +32,6 @@ pub trait Package: Clone {
     /// Set the package MD5 hash
     fn set_hash(&mut self, hash: &str);
 
-    /// Get the full name for the package: <name>-<version> (E.g: glibc-2.3)
+    /// Get the full name for the package: `<name>-<version>` (E.g: glibc-2.3)
     fn get_full_name(&self) -> String;
 }

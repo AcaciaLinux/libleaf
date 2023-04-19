@@ -1,9 +1,9 @@
-use std::path::{Path, PathBuf};
 use crate::Config;
+use std::path::{Path, PathBuf};
 
 impl Config {
     /// Returns the root directory leaf should work in
-    /// 
+    ///
     /// Default: `/`
     pub fn get_root(&self) -> &Path {
         match &self.root {
@@ -13,7 +13,7 @@ impl Config {
     }
 
     /// Returns the directory where leaf should put its configs (overrides the `root_dir` default)
-    /// 
+    ///
     /// Default: `root_dir/etc/leaf`
     pub fn get_config_dir(&self) -> PathBuf {
         match &self.config_dir {
@@ -23,7 +23,7 @@ impl Config {
     }
 
     /// Returns the directory leaf should look for and store the mirror files (overrides the `config_dir` default)
-    /// 
+    ///
     /// Default: `config_dir/mirrors`
     pub fn get_mirrors_dir(&self) -> PathBuf {
         match &self.mirrors_dir {
@@ -33,7 +33,7 @@ impl Config {
     }
 
     /// Returns the directory where leaf should put its caches (overrides the `root_dir` default)
-    /// 
+    ///
     /// Default: `root_dir/var/cache/leaf`
     pub fn get_cache_dir(&self) -> PathBuf {
         match &self.cache_dir {
@@ -43,7 +43,7 @@ impl Config {
     }
 
     /// Returns the directory where leaf should put its download caches (overrides the `cache_dir` default)
-    /// 
+    ///
     /// /// Default: `cache_dir/download`
     pub fn get_download_dir(&self) -> PathBuf {
         match &self.download_dir {
@@ -53,7 +53,7 @@ impl Config {
     }
 
     /// Returns the directory where leaf should put its package caches (overrides the `cache_dir` default)
-    /// 
+    ///
     /// Default: `cache_dir/package`
     pub fn get_packages_dir(&self) -> PathBuf {
         match &self.packages_dir {
