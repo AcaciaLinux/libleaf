@@ -1,5 +1,8 @@
 /target
 /Cargo.lock
 /leaf.h
+/root
+/.vscode
+*.DS_Store
 *.out
 *.c
