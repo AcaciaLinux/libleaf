@@ -1,4 +1,8 @@
-
+pub mod config;
+pub mod error;
+pub mod mirror;
+pub mod package;
+pub mod util;
 mod download;
 mod pbar;
 
