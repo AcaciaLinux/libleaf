@@ -44,6 +44,13 @@ impl Package for RemotePackage {
         self.real_version = real_version
     }
 
+    fn get_description(&self) -> &str {
+        self.description.as_str()
+    }
+    fn set_description(&mut self, description: &str) {
+        self.description = description.to_owned()
+    }
+
     fn get_dependencies<'a>(&'a self) -> &'a Vec<String> {
         &self.dependencies
     }
@@ -60,7 +67,7 @@ impl Package for RemotePackage {
     }
 
     fn get_full_name(&self) -> String {
-        format!("{}-{} ({})", self.name, self.version, self.real_version)
+        format!("{}-{}", self.name, self.version)
     }
 }
 

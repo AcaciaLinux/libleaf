@@ -22,6 +22,11 @@ pub trait Package: Clone {
     /// Set the package real version
     fn set_real_version(&mut self, real_version: u64);
 
+    /// Get the description of the package
+    fn get_description(&self) -> &str;
+    /// Set the description for the package
+    fn set_description(&mut self, description: &str);
+
     /// Get a reference to the dependencies required by the package
     fn get_dependencies<'a>(&'a self) -> &'a Vec<String>;
     /// Set the dependencies needed by this package
