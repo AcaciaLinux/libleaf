@@ -21,7 +21,8 @@ where
     let mut error = LError::new_class(LErrorClass::Unknown);
 
     //Allow CURL to follow redirections
-    easy.follow_location(true).expect("CURL setup: redirections");
+    easy.follow_location(true)
+        .expect("CURL setup: redirections");
 
     //Setup the low speed bounds (less that 1000bytes in 30 seconds)
     easy.low_speed_limit(1000)

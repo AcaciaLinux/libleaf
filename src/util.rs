@@ -3,17 +3,28 @@
 use crate::{config::Config, error::*, package::remote::*};
 use serde::{Deserialize, Deserializer};
 use std::{fmt::Display, fs::create_dir_all, str::FromStr};
+use std::path::PathBuf;
 
-pub fn ensure_dirs(conf: &Config) -> Result<(), LError> {
-    let dir = conf.get_mirrors_dir();
-
+fn ensure_dir(dir: &PathBuf) -> Result<(), LError> {
     if !dir.exists() {
         info!(
-            "Creating missing mirrors directory {}",
+            "Creating missing directory {}",
             dir.to_str().unwrap_or("")
         );
-        create_dir_all(dir)?
+        create_dir_all(dir)?;
     }
+
+    Ok(())
+}
+
+pub fn ensure_dirs(conf: &Config) -> Result<(), LError> {
+    //Ensures /etc/leaf and /etc/leaf/mirrors
+    ensure_dir(&conf.get_mirrors_dir())?;
+
+    //Ensures /var/cache/leaf/ and /var/cache/leaf/download
+    ensure_dir(&conf.get_download_dir())?;
+    //Ensures /var/cache/leaf/package
+    ensure_dir(&conf.get_packages_dir())?;
 
     Ok(())
 }
