@@ -84,6 +84,18 @@ impl RemotePackage {
             .get_download_dir()
             .join(self.get_full_name() + ".lfpkg");
 
+        //Check if a file exists and if so, check if the hash matches and skip the download
+        if file_path.exists() {
+            if compute_hash(&file_path)? == self.hash {
+                usermsg!("Skipped fetching of package: {}", self.get_full_name());
+
+                let mut local_package = LocalPackage::from(self);
+                local_package.set_hash(&self.hash);
+
+                return Ok(local_package);
+            }
+        }
+
         let mut file = std::fs::File::create(&file_path)?;
 
         download(
