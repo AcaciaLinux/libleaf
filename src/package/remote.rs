@@ -1,6 +1,12 @@
+use std::io::Write;
+
 use serde::{Deserialize, Serialize};
 
 pub use super::Package;
+use crate::config::Config;
+use crate::download::*;
+use crate::error::*;
+use crate::usermsg;
 
 /// A remote package is a package available at a mirror for downloading
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -54,6 +60,31 @@ impl Package for RemotePackage {
     }
 
     fn get_full_name(&self) -> String {
-        format!("{}-{}", self.name, self.version)
+        format!("{}-{} ({})", self.name, self.version, self.real_version)
+    }
+}
+
+impl RemotePackage {
+    /// Uses the provided configuration to fetch this remote package to the local system
+    /// # Arguments
+    /// * `config` - The configuration to use for acquiring information about the fetch process
+    pub fn fetch(&self, config: &Config) -> Result<(), LError> {
+        crate::util::ensure_dirs(config)?;
+
+        let mut file = std::fs::File::create(
+            config
+                .get_download_dir()
+                .join(self.get_full_name() + ".lfpkg"),
+        )?;
+
+        download(
+            &self.url,
+            format!("Fetching package {}", self.get_full_name()).as_str(),
+            move |data| file.write_all(data).is_ok(),
+        )?;
+
+        usermsg!("Fetched package {}", self.get_full_name());
+
+        Ok(())
     }
 }
