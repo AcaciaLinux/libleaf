@@ -47,6 +47,7 @@ impl Mirror {
         match download::download(
             &self.url,
             format!("Updating mirror {}...", self.name).as_str(),
+            config.render_bar,
             |data| {
                 buf.extend_from_slice(data);
                 true

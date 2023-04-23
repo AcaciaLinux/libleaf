@@ -88,6 +88,7 @@ impl RemotePackage {
         download(
             &self.url,
             format!("Fetching package {}", self.get_full_name()).as_str(),
+            config.render_bar,
             move |data| file.write_all(data).is_ok(),
         )?;
 

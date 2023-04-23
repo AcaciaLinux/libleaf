@@ -14,6 +14,8 @@ pub struct Config {
     /// How many parallel downloads should be performed if possible
     pub download_workers: usize,
 
+    pub render_bar: bool,
+
     /// The root directory leaf should work on (default: `/`)
     pub root: Option<PathBuf>,
 
@@ -40,6 +42,7 @@ impl Default for Config {
         Config {
             loglevel: LogLevel::Default,
             download_workers: 5,
+            render_bar: true,
             root: None,
             config_dir: None,
             config_file: None,

@@ -1,4 +1,4 @@
-use crate::pbar;
+use crate::{pbar, usermsg};
 use std::time::Duration;
 
 use crate::error::*;
@@ -7,7 +7,12 @@ use indicatif::HumanBytes;
 use std::sync::atomic::Ordering::Relaxed;
 
 ///Downloads the contents of the supplied url
-pub fn download<'data, F>(url: &str, message: &str, mut write_function: F) -> Result<(), LError>
+pub fn download<'data, F>(
+    url: &str,
+    message: &str,
+    display_bar: bool,
+    mut write_function: F,
+) -> Result<(), LError>
 where
     F: FnMut(&[u8]) -> bool + Send + 'data,
 {
@@ -31,25 +36,27 @@ where
         .expect("CURL setup: low_speed_time()");
 
     //If we can create a progress bar, set the progress function
-    match pbar::create_bar(pbar::Template::Download) {
-        None => {
-            warn!("Failed to create progress bar, continuing without!");
-        }
-        Some(bar) => {
-            easy.progress(true).expect("CURL setup: progress()");
-            easy.progress_function(move |dltotal, dlnow, _, _| {
-                bar.set_length(dltotal as u64);
-                bar.set_position(dlnow as u64);
-                bar.set_message(
-                    HumanBytes(dlnow as u64).to_string()
-                        + " / "
-                        + HumanBytes(dltotal as u64).to_string().as_str(),
-                );
-                bar.set_prefix(progress_message.clone());
+    if display_bar {
+        match pbar::create_bar(pbar::Template::Download) {
+            None => {
+                warn!("Failed to create progress bar, continuing without!");
+            }
+            Some(bar) => {
+                easy.progress(true).expect("CURL setup: progress()");
+                easy.progress_function(move |dltotal, dlnow, _, _| {
+                    bar.set_length(dltotal as u64);
+                    bar.set_position(dlnow as u64);
+                    bar.set_message(
+                        HumanBytes(dlnow as u64).to_string()
+                            + " / "
+                            + HumanBytes(dltotal as u64).to_string().as_str(),
+                    );
+                    bar.set_prefix(progress_message.clone());
 
-                crate::RUNNING.load(Relaxed)
-            })
-            .expect("CURL setup: progress_function()");
+                    crate::RUNNING.load(Relaxed)
+                })
+                .expect("CURL setup: progress_function()");
+            }
         }
     }
 
@@ -69,6 +76,10 @@ where
                 }
             })
             .expect("CURL setup: write_function()");
+
+        if !display_bar {
+            usermsg!("{}", message);
+        }
 
         //Perform now
         match transfer.perform() {
