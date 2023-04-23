@@ -8,6 +8,7 @@ use crate::config::Config;
 use crate::download::*;
 use crate::error::*;
 use crate::usermsg;
+use crate::util::compute_hash;
 
 /// A remote package is a package available at a mirror for downloading
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -79,11 +80,11 @@ impl RemotePackage {
     pub fn fetch(&self, config: &Config) -> Result<LocalPackage, LError> {
         crate::util::ensure_dirs(config)?;
 
-        let mut file = std::fs::File::create(
-            config
-                .get_download_dir()
-                .join(self.get_full_name() + ".lfpkg"),
-        )?;
+        let file_path = config
+            .get_download_dir()
+            .join(self.get_full_name() + ".lfpkg");
+
+        let mut file = std::fs::File::create(&file_path)?;
 
         download(
             &self.url,
@@ -94,6 +95,10 @@ impl RemotePackage {
 
         usermsg!("Fetched package {}", self.get_full_name());
 
-        Ok(LocalPackage::from(self))
+        let hash = compute_hash(&file_path).expect("Hash");
+        let mut local_package = LocalPackage::from(self);
+        local_package.set_hash(hash.as_str());
+
+        Ok(local_package)
     }
 }
