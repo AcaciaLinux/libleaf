@@ -1,9 +1,11 @@
 //! Some utility functions to aid the management of the leaf package manager
 
+use crate::mirror::{self, Mirror};
 use crate::{config::Config, error::*, package::remote::*};
 use serde::{Deserialize, Deserializer};
 use std::fs::File;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
 use std::{fmt::Display, fs::create_dir_all, str::FromStr};
 use tar::Archive;
 use xz::read::XzDecoder;
@@ -43,6 +45,52 @@ pub fn find_package<'a, T: Package>(name: &str, list: &'a Vec<T>) -> Option<&'a 
     }
 
     None
+}
+
+/// Resolves the whole dependency tree of the package with the provided name
+/// and sorts them in the order they should be installed in
+/// # Arguments
+/// * `package_name` - The name of the package to resolve
+/// * `dependencies` - A Vec of RemotePackages where the tree gets put into
+/// * `mirrors` - A Vec of Mirrors to search for the package and dependencies
+pub fn resolve_dependencies<'a>(
+    package_name: &str,
+    dependencies: &'a mut Vec<RemotePackage>,
+    mirrors: &'a Vec<Arc<Mutex<Mirror>>>,
+) -> Result<(), LError> {
+    //Try resolving the package
+    let package = mirror::resolve_package(package_name, mirrors)?;
+
+    // Check if this package hasn't already been resolved
+    if find_package(package_name, &dependencies).is_some() {
+        trace!(
+            "[resolver] Skipping dependency resolving of package {}",
+            package.get_full_name()
+        );
+        return Ok(());
+    }
+
+    //Push the package to prevent double resolving
+    dependencies.push(package.clone());
+
+    //Go through all dependencies and resolve them
+    for dep in package.get_dependencies() {
+        resolve_dependencies(dep.as_str(), dependencies, mirrors)?;
+    }
+
+    //Move the package back, it gets installed AFTER its dependencies
+    match dependencies
+        .iter()
+        .position(|p| p.get_hash() == package.get_hash())
+    {
+        Some(pos) => {
+            let dep = dependencies.remove(pos);
+            dependencies.push(dep);
+        }
+        None => {}
+    }
+
+    Ok(())
 }
 
 /// Deserializes a integer from a string
