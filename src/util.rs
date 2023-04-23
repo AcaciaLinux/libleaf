@@ -2,15 +2,15 @@
 
 use crate::{config::Config, error::*, package::remote::*};
 use serde::{Deserialize, Deserializer};
+use std::fs::File;
+use std::path::{Path, PathBuf};
 use std::{fmt::Display, fs::create_dir_all, str::FromStr};
-use std::path::PathBuf;
+use tar::Archive;
+use xz::read::XzDecoder;
 
 fn ensure_dir(dir: &PathBuf) -> Result<(), LError> {
     if !dir.exists() {
-        info!(
-            "Creating missing directory {}",
-            dir.to_str().unwrap_or("")
-        );
+        info!("Creating missing directory {}", dir.to_str().unwrap_or(""));
         create_dir_all(dir)?;
     }
 
@@ -63,4 +63,19 @@ where
         StringOrInt::String(s) => s.parse::<T>().map_err(serde::de::Error::custom),
         StringOrInt::Number(i) => Ok(i),
     }
+}
+
+/// A convenient wrapper around the tar and xz libararies
+/// # Arguments
+/// * `source` - The path to the source tarball
+/// * `destination` - The destination path to extract into
+pub fn extract(source: &Path, destination: &Path) -> Result<(), LError> {
+    let tar_file = File::open(source)?;
+    let tar = XzDecoder::new(tar_file);
+
+    let mut archive = Archive::new(tar);
+    archive.set_overwrite(true);
+    archive.unpack(destination)?;
+
+    Ok(())
 }
