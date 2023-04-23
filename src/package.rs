@@ -1,6 +1,7 @@
 //! A package is the main work horse of the leaf package manager.
 //! Every variant of a package implements the trait Package.
 
+pub mod local;
 pub mod remote;
 
 pub use serde::{de, Deserialize, Serialize};

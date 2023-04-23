@@ -1,18 +1,14 @@
-use std::io::Write;
-
 use serde::{Deserialize, Serialize};
 
-use super::local::LocalPackage;
-pub use super::Package;
-use crate::config::Config;
-use crate::download::*;
-use crate::error::*;
-use crate::usermsg;
+use crate::{config::Config, util, LError};
 
-/// A remote package is a package available at a mirror for downloading
+use super::remote::RemotePackage;
+pub use super::Package;
+
+/// A remote package is a package available locally, ready to be deployed
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[allow(dead_code)]
-pub struct RemotePackage {
+pub struct LocalPackage {
     name: String,
     version: String,
     #[serde(deserialize_with = "crate::util::deserialize_number_from_string")]
@@ -20,10 +16,9 @@ pub struct RemotePackage {
     description: String,
     dependencies: Vec<String>,
     hash: String,
-    url: String,
 }
 
-impl Package for RemotePackage {
+impl Package for LocalPackage {
     fn get_name(&self) -> String {
         self.name.to_owned()
     }
@@ -72,27 +67,48 @@ impl Package for RemotePackage {
     }
 }
 
-impl RemotePackage {
-    /// Uses the provided configuration to fetch this remote package to the local system
+impl LocalPackage {
+    /// Extracts the local package into the packages_dir
     /// # Arguments
-    /// * `config` - The configuration to use for acquiring information about the fetch process
-    pub fn fetch(&self, config: &Config) -> Result<LocalPackage, LError> {
-        crate::util::ensure_dirs(config)?;
+    /// * `config` - The config to refer to for paths
+    pub fn extract(&self, config: &Config) -> Result<(), LError> {
+        let target_dir = config.get_packages_dir();
+        let target_path = target_dir.join(self.get_full_name());
 
-        let mut file = std::fs::File::create(
-            config
+        if target_path.exists() {
+            info!(
+                "Removing already existing extracted package tree at {}",
+                target_path.to_str().unwrap_or("")
+            );
+            std::fs::remove_dir_all(target_path)?;
+        }
+
+        info!(
+            "Extracting package {} into {}",
+            self.get_full_name(),
+            target_dir.to_str().unwrap_or("")
+        );
+
+        util::extract(
+            &config
                 .get_download_dir()
                 .join(self.get_full_name() + ".lfpkg"),
+            &config.get_packages_dir(),
         )?;
 
-        download(
-            &self.url,
-            format!("Fetching package {}", self.get_full_name()).as_str(),
-            move |data| file.write_all(data).is_ok(),
-        )?;
+        Ok(())
+    }
+}
 
-        usermsg!("Fetched package {}", self.get_full_name());
-
-        Ok(LocalPackage::from(self))
+impl From<&RemotePackage> for LocalPackage {
+    fn from(value: &RemotePackage) -> Self {
+        Self {
+            name: value.get_name(),
+            version: value.get_version(),
+            real_version: value.get_real_version(),
+            description: value.get_description().to_owned(),
+            dependencies: value.get_dependencies().clone(),
+            hash: "".to_owned(),
+        }
     }
 }
