@@ -113,8 +113,8 @@ impl Mirror {
     /// # Arguments
     /// * `name` - The package name to search for
     /// # Returns
-    /// A clone of the package
-    pub fn find_package(&self, name: &str) -> Result<RemotePackage, LError> {
+    /// A reference to the package
+    pub fn find_package<'a>(&'a self, name: &str) -> Result<&'a RemotePackage, LError> {
         match &self.packages {
             None => Err(LError::new(LErrorClass::MirrorNotLoaded, &self.name)),
             Some(p) => match crate::util::find_package(name, &p) {
@@ -140,8 +140,8 @@ pub fn resolve_package(
 
         match mirror.find_package(name) {
             Ok(p) => {
-                info!("Mirror {} has package {}", mirror.name, name);
-                return Ok(p);
+                debug!("Mirror {} has package {}", mirror.name, name);
+                return Ok(p.clone());
             }
             Err(e) => {
                 if e.class == LErrorClass::PackageNotFound {

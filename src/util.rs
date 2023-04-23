@@ -34,11 +34,11 @@ pub fn ensure_dirs(conf: &Config) -> Result<(), LError> {
 /// * `name` - The package name to search for
 /// * `list` - A reference to the vector of Package to search
 /// # Returns
-/// A clone of the package found wrapped in a Option, None if nothing has been found
-pub fn find_package<T: Package>(name: &str, list: &Vec<T>) -> Option<T> {
+/// A reference to the package found wrapped in a Option, None if nothing has been found
+pub fn find_package<'a, T: Package>(name: &str, list: &'a Vec<T>) -> Option<&'a T> {
     for package in list {
         if package.get_name() == name {
-            return Some(package.clone());
+            return Some(package);
         }
     }
 
