@@ -1,3 +1,4 @@
+pub mod actions;
 pub mod config;
 mod download;
 pub mod error;
