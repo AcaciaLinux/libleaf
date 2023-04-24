@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{config::Config, util, LError};
+use crate::{config::Config, error::LError, util};
 
 use super::remote::RemotePackage;
 pub use super::Package;
