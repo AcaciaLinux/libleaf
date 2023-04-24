@@ -8,7 +8,7 @@ pub const DEFAULT_CONFIG: &str = include_str!("../../defconfig.conf");
 pub fn ensure_config_file(config: &Config) -> Result<(), LError> {
     util::ensure_dirs(config)?;
 
-    let etc_conf_buf = config.get_config_file().clone();
+    let etc_conf_buf = config.get_config_file();
     let etc_conf = etc_conf_buf.as_path();
     let lib_conf_buf = config.get_config_file_lib();
     let lib_conf = lib_conf_buf.as_path();

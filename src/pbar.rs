@@ -2,7 +2,7 @@ use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 
 use once_cell::sync::Lazy;
 
-static mut MULTI_BAR: Lazy<MultiProgress> = Lazy::new(|| MultiProgress::new());
+static mut MULTI_BAR: Lazy<MultiProgress> = Lazy::new(MultiProgress::new);
 
 pub enum Template {
     Download,

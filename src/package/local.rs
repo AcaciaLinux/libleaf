@@ -47,7 +47,7 @@ impl Package for LocalPackage {
         self.description = description.to_owned()
     }
 
-    fn get_dependencies<'a>(&'a self) -> &'a Vec<String> {
+    fn get_dependencies(&self) -> &Vec<String> {
         &self.dependencies
     }
     fn set_dependencies(&mut self, dependencies: Vec<String>) {

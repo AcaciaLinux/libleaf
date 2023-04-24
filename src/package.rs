@@ -29,7 +29,7 @@ pub trait Package: Clone {
     fn set_description(&mut self, description: &str);
 
     /// Get a reference to the dependencies required by the package
-    fn get_dependencies<'a>(&'a self) -> &'a Vec<String>;
+    fn get_dependencies(&self) -> &Vec<String>;
     /// Set the dependencies needed by this package
     fn set_dependencies(&mut self, dependencies: Vec<String>);
 

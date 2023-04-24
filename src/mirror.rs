@@ -70,7 +70,7 @@ impl Mirror {
             Err(e) => {
                 return Err(LError::new(
                     LErrorClass::JSON,
-                    format!("When updating mirror {}: {}", self.name, e.to_string()).as_str(),
+                    format!("When updating mirror {}: {}", self.name, e).as_str(),
                 ))
             }
         };
@@ -98,7 +98,7 @@ impl Mirror {
             Err(e) => {
                 return Err(LError::new(
                     LErrorClass::JSON,
-                    format!("When loading mirror {}: {}", self.name, e.to_string()).as_str(),
+                    format!("When loading mirror {}: {}", self.name, e).as_str(),
                 ))
             }
         };
@@ -118,7 +118,7 @@ impl Mirror {
     pub fn find_package<'a>(&'a self, name: &str) -> Result<&'a RemotePackage, LError> {
         match &self.packages {
             None => Err(LError::new(LErrorClass::MirrorNotLoaded, &self.name)),
-            Some(p) => match crate::util::find_package(name, &p) {
+            Some(p) => match crate::util::find_package(name, p) {
                 None => Err(LError::new(LErrorClass::PackageNotFound, name)),
                 Some(p) => Ok(p),
             },

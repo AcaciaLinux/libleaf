@@ -35,7 +35,7 @@ impl LError {
     /// * `class` - The type of error
     pub fn new_class(class: LErrorClass) -> LError {
         LError {
-            class: class,
+            class,
             message: None,
         }
     }
@@ -46,7 +46,7 @@ impl LError {
     /// * `message` - Additional information about the error at hand
     pub fn new(class: LErrorClass, message: &str) -> LError {
         LError {
-            class: class,
+            class,
             message: Some(message.to_owned()),
         }
     }

@@ -19,20 +19,20 @@ pub static RUNNING: AtomicBool = AtomicBool::new(true);
 #[macro_export]
 macro_rules! usermsg {
     ($($arg:tt)*) => {
-        crate::pbar::println(format!($($arg)*).as_str()).expect("Failed to print above progress bar!")
+        $crate::pbar::println(format!($($arg)*).as_str()).expect("Failed to print above progress bar!")
     };
 }
 
 #[macro_export]
 macro_rules! usererr {
     ($($arg:tt)*) => {
-        crate::pbar::println(format!("\x1B[1;91m{}\x1B[0m", format!($($arg)*))).expect("Failed to print above progress bar!")
+        $crate::pbar::println(format!("\x1B[1;91m{}\x1B[0m", format!($($arg)*))).expect("Failed to print above progress bar!")
     };
 }
 
 #[macro_export]
 macro_rules! userwarn {
     ($($arg:tt)*) => {
-        crate::pbar::println(format!("\x1B[1;93m{}\x1B[0m", format!($($arg)*))).expect("Failed to print above progress bar!")
+        $crate::pbar::println(format!("\x1B[1;93m{}\x1B[0m", format!($($arg)*))).expect("Failed to print above progress bar!")
     };
 }

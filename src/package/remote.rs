@@ -53,7 +53,7 @@ impl Package for RemotePackage {
         self.description = description.to_owned()
     }
 
-    fn get_dependencies<'a>(&'a self) -> &'a Vec<String> {
+    fn get_dependencies(&self) -> &Vec<String> {
         &self.dependencies
     }
     fn set_dependencies(&mut self, dependencies: Vec<String>) {
@@ -85,15 +85,13 @@ impl RemotePackage {
             .join(self.get_full_name() + ".lfpkg");
 
         //Check if a file exists and if so, check if the hash matches and skip the download
-        if file_path.exists() {
-            if compute_hash(&file_path)? == self.hash {
-                usermsg!("Skipped fetching of package: {}", self.get_full_name());
+        if file_path.exists() && compute_hash(&file_path)? == self.hash {
+            usermsg!("Skipped fetching of package: {}", self.get_full_name());
 
-                let mut local_package = LocalPackage::from(self);
-                local_package.set_hash(&self.hash);
+            let mut local_package = LocalPackage::from(self);
+            local_package.set_hash(&self.hash);
 
-                return Ok(local_package);
-            }
+            return Ok(local_package);
         }
 
         let mut file = std::fs::File::create(&file_path)?;

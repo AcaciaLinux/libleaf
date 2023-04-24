@@ -39,14 +39,8 @@ pub fn ensure_dirs(conf: &Config) -> Result<(), LError> {
 /// * `list` - A reference to the vector of Package to search
 /// # Returns
 /// A reference to the package found wrapped in a Option, None if nothing has been found
-pub fn find_package<'a, T: Package>(name: &str, list: &'a Vec<T>) -> Option<&'a T> {
-    for package in list {
-        if package.get_name() == name {
-            return Some(package);
-        }
-    }
-
-    None
+pub fn find_package<'a, T: Package>(name: &str, list: &'a [T]) -> Option<&'a T> {
+    list.iter().find(|&package| package.get_name() == name)
 }
 
 /// Resolves the whole dependency tree of the package with the provided name
@@ -64,7 +58,7 @@ pub fn resolve_dependencies<'a>(
     let package = mirror::resolve_package(package_name, mirrors)?;
 
     // Check if this package hasn't already been resolved
-    if find_package(package_name, &dependencies).is_some() {
+    if find_package(package_name, dependencies).is_some() {
         trace!(
             "[resolver] Skipping dependency resolving of package {}",
             package.get_full_name()
@@ -81,15 +75,12 @@ pub fn resolve_dependencies<'a>(
     }
 
     //Move the package back, it gets installed AFTER its dependencies
-    match dependencies
+    if let Some(pos) = dependencies
         .iter()
         .position(|p| p.get_hash() == package.get_hash())
     {
-        Some(pos) => {
-            let dep = dependencies.remove(pos);
-            dependencies.push(dep);
-        }
-        None => {}
+        let dep = dependencies.remove(pos);
+        dependencies.push(dep);
     }
 
     Ok(())
@@ -135,7 +126,7 @@ pub fn extract(source: &Path, destination: &Path) -> Result<(), LError> {
 /// * `source` - The source file to hash
 pub fn compute_hash(source: &Path) -> Result<String, LError> {
     //Open the file
-    let mut file = fs::File::open(&source)?;
+    let mut file = fs::File::open(source)?;
 
     //Creat the hasher and hash
     let mut hasher = Md5::new();

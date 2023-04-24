@@ -7,7 +7,7 @@ impl Config {
     /// Default: `/`
     pub fn get_root(&self) -> &Path {
         match &self.root {
-            Some(p) => &p,
+            Some(p) => p,
             None => Path::new("/"),
         }
     }
