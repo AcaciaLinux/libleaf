@@ -3,6 +3,7 @@
 /leaf.h
 /root
 /.vscode
+/src/main.rs
 *.DS_Store
 *.out
 *.c
