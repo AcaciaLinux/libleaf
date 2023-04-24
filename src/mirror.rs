@@ -7,7 +7,7 @@ use crate::error::*;
 use crate::package::remote::RemotePackage;
 
 /// Represents an online mirror leaf can query package lists from to provide packages
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Mirror {
     pub name: String,
     pub url: String,
@@ -155,4 +155,10 @@ pub fn resolve_package(
     }
 
     Err(LError::new(LErrorClass::PackageNotFound, name))
+}
+
+impl PartialEq for Mirror {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
 }

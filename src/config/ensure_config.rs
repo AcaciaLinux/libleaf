@@ -1,4 +1,4 @@
-use crate::{config::Config, util, LError};
+use crate::{config::Config, error::LError, util};
 use std::{fs::*, path::PathBuf};
 
 pub const DEFAULT_CONFIG: &str = include_str!("../../defconfig.conf");
