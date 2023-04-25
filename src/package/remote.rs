@@ -1,9 +1,8 @@
+use serde::Deserialize;
 use std::io::Write;
 
-use serde::{Deserialize, Serialize};
-
 use super::local::LocalPackage;
-pub use super::Package;
+pub use super::{Dependencies, Package};
 use crate::config::Config;
 use crate::download::*;
 use crate::error::*;
@@ -11,7 +10,7 @@ use crate::util::compute_hash;
 use crate::{usererr, usermsg};
 
 /// A remote package is a package available at a mirror for downloading
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[allow(dead_code)]
 pub struct RemotePackage {
     name: String,
@@ -19,7 +18,8 @@ pub struct RemotePackage {
     #[serde(deserialize_with = "crate::util::deserialize_number_from_string")]
     real_version: u64,
     description: String,
-    dependencies: Vec<String>,
+    #[serde(deserialize_with = "crate::package::Dependencies::deserialize_unresolved")]
+    dependencies: Dependencies,
     hash: String,
     url: String,
 }
@@ -53,10 +53,10 @@ impl Package for RemotePackage {
         self.description = description.to_owned()
     }
 
-    fn get_dependencies(&self) -> &Vec<String> {
+    fn get_dependencies(&self) -> &Dependencies {
         &self.dependencies
     }
-    fn set_dependencies(&mut self, dependencies: Vec<String>) {
+    fn set_dependencies(&mut self, dependencies: Dependencies) {
         self.dependencies = dependencies
     }
 
