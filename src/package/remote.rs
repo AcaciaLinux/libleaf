@@ -8,9 +8,10 @@ use crate::download::*;
 use crate::error::*;
 use crate::util::compute_hash;
 use crate::{usererr, usermsg};
+use derive::Package;
 
 /// A remote package is a package available at a mirror for downloading
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Package, Debug, Deserialize, Clone)]
 #[allow(dead_code)]
 pub struct RemotePackage {
     name: String,
@@ -22,51 +23,6 @@ pub struct RemotePackage {
     dependencies: Dependencies,
     hash: String,
     url: String,
-}
-
-impl Package for RemotePackage {
-    fn get_name(&self) -> String {
-        self.name.to_owned()
-    }
-    fn set_name(&mut self, name: &str) {
-        self.name = name.to_owned()
-    }
-
-    fn get_version(&self) -> String {
-        self.version.to_owned()
-    }
-    fn set_version(&mut self, version: &str) {
-        self.version = version.to_owned()
-    }
-
-    fn get_real_version(&self) -> u64 {
-        self.real_version
-    }
-    fn set_real_version(&mut self, real_version: u64) {
-        self.real_version = real_version
-    }
-
-    fn get_description(&self) -> &str {
-        self.description.as_str()
-    }
-    fn set_description(&mut self, description: &str) {
-        self.description = description.to_owned()
-    }
-
-    fn get_dependencies(&self) -> &Dependencies {
-        &self.dependencies
-    }
-    fn set_dependencies(&mut self, dependencies: Dependencies) {
-        self.dependencies = dependencies
-    }
-
-    fn get_hash(&self) -> String {
-        self.hash.to_owned()
-    }
-
-    fn set_hash(&mut self, hash: &str) {
-        self.hash = hash.to_owned()
-    }
 }
 
 impl RemotePackage {
