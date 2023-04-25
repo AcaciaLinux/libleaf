@@ -53,7 +53,14 @@ pub trait Package: Clone {
     fn set_hash(&mut self, hash: &str);
 
     /// Get the full name for the package: `<name>-<version>` (E.g: glibc-2.3)
-    fn get_full_name(&self) -> String;
+    fn get_full_name(&self) -> String {
+        format!("{}-{}", self.get_name(), self.get_version())
+    }
+
+    /// Get the fully qualified name for the package: `<name>-<version>-<real_version>` (E.g: glibc-2.3-9)
+    fn get_fq_name(&self) -> String {
+        format!("{}-{}-{}", self.get_name(), self.get_version(), self.get_real_version())
+    }
 }
 
 impl Clone for Dependencies {

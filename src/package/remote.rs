@@ -67,10 +67,6 @@ impl Package for RemotePackage {
     fn set_hash(&mut self, hash: &str) {
         self.hash = hash.to_owned()
     }
-
-    fn get_full_name(&self) -> String {
-        format!("{}-{}", self.name, self.version)
-    }
 }
 
 impl RemotePackage {
@@ -86,7 +82,7 @@ impl RemotePackage {
 
         //Check if a file exists and if so, check if the hash matches and skip the download
         if file_path.exists() && compute_hash(&file_path)? == self.hash {
-            usermsg!("Skipped fetching of package: {}", self.get_full_name());
+            usermsg!("Skipped fetching of package: {}", self.get_fq_name());
 
             let mut local_package = LocalPackage::from(self);
             local_package.set_hash(&self.hash);
@@ -98,14 +94,14 @@ impl RemotePackage {
 
         match download(
             &self.url,
-            format!("Fetching package {}", self.get_full_name()).as_str(),
+            format!("Fetching package {}", self.get_fq_name()).as_str(),
             config.render_bar,
             move |data| file.write_all(data).is_ok(),
         ) {
-            Ok(_) => usermsg!("Fetched package {}", self.get_full_name()),
+            Ok(_) => usermsg!("Fetched package {}", self.get_fq_name()),
             Err(e) => usererr!(
                 "Failed to fetch package {}: {}",
-                self.get_full_name(),
+                self.get_fq_name(),
                 e.message.unwrap_or("".to_string())
             ),
         };

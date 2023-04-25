@@ -61,10 +61,6 @@ impl Package for LocalPackage {
     fn set_hash(&mut self, hash: &str) {
         self.hash = hash.to_owned()
     }
-
-    fn get_full_name(&self) -> String {
-        format!("{}-{}", self.name, self.version)
-    }
 }
 
 impl LocalPackage {
