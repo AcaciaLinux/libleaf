@@ -7,8 +7,8 @@ pub use super::Package;
 use crate::config::Config;
 use crate::download::*;
 use crate::error::*;
-use crate::usermsg;
 use crate::util::compute_hash;
+use crate::{usererr, usermsg};
 
 /// A remote package is a package available at a mirror for downloading
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -96,14 +96,19 @@ impl RemotePackage {
 
         let mut file = std::fs::File::create(&file_path)?;
 
-        download(
+        match download(
             &self.url,
             format!("Fetching package {}", self.get_full_name()).as_str(),
             config.render_bar,
             move |data| file.write_all(data).is_ok(),
-        )?;
-
-        usermsg!("Fetched package {}", self.get_full_name());
+        ) {
+            Ok(_) => usermsg!("Fetched package {}", self.get_full_name()),
+            Err(e) => usererr!(
+                "Failed to fetch package {}: {}",
+                self.get_full_name(),
+                e.message.unwrap_or("".to_string())
+            ),
+        };
 
         let hash = compute_hash(&file_path).expect("Hash");
         let mut local_package = LocalPackage::from(self);
