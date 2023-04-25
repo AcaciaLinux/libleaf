@@ -1,9 +1,7 @@
-pub mod alter;
 pub mod dirs;
 pub mod ensure_config;
 pub mod files;
 
-use super::mirror::Mirror;
 use std::path::PathBuf;
 
 /// The configuration leaf should process
@@ -12,9 +10,6 @@ use std::path::PathBuf;
 pub struct Config {
     /// The loglevel to use
     pub loglevel: LogLevel,
-
-    /// The mirrors to use
-    pub mirrors: Vec<Mirror>,
 
     /// How many parallel downloads should be performed if possible
     pub download_workers: usize,
@@ -47,7 +42,6 @@ impl Default for Config {
     fn default() -> Self {
         Config {
             loglevel: LogLevel::Default,
-            mirrors: vec![],
             download_workers: 5,
             render_bar: true,
             root: None,
