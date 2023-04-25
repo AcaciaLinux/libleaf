@@ -6,7 +6,6 @@ use md5::*;
 use serde::{Deserialize, Deserializer};
 use std::fs::File;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
 use std::{fmt::Display, fs::create_dir_all, str::FromStr};
 use std::{fs, io};
 use tar::Archive;
@@ -52,7 +51,7 @@ pub fn find_package<'a, T: Package>(name: &str, list: &'a [T]) -> Option<&'a T> 
 pub fn resolve_dependencies<'a>(
     package_name: &str,
     dependencies: &'a mut Vec<RemotePackage>,
-    mirrors: &'a Vec<Arc<Mutex<Mirror>>>,
+    mirrors: &'a Vec<Mirror>,
 ) -> Result<(), LError> {
     //Try resolving the package
     let package = mirror::resolve_package(package_name, mirrors)?;
