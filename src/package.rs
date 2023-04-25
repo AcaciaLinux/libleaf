@@ -59,7 +59,12 @@ pub trait Package: Clone {
 
     /// Get the fully qualified name for the package: `<name>-<version>-<real_version>` (E.g: glibc-2.3-9)
     fn get_fq_name(&self) -> String {
-        format!("{}-{}-{}", self.get_name(), self.get_version(), self.get_real_version())
+        format!(
+            "{}-{}-{}",
+            self.get_name(),
+            self.get_version(),
+            self.get_real_version()
+        )
     }
 }
 
