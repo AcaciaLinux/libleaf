@@ -43,7 +43,7 @@ pub fn update(config: &Config, mirrors: &Vec<Mirror>) -> Result<(), Vec<LError>>
 
 pub fn download_packages(
     config: &Config,
-    packages: &Vec<RemotePackage>,
+    packages: &Vec<Arc<RemotePackage>>,
 ) -> Vec<Result<LocalPackage, LError>> {
     let pool = ThreadPool::new(config.download_workers);
 
