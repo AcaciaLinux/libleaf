@@ -1,6 +1,8 @@
 use crate::download;
 use crate::{config::Config, usererr, usermsg};
+use serde::{Deserialize, Deserializer};
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use crate::error::*;
 use crate::package::remote::RemotePackage;
@@ -10,7 +12,7 @@ use crate::package::remote::RemotePackage;
 pub struct Mirror {
     pub name: String,
     pub url: String,
-    pub packages: Option<Vec<RemotePackage>>,
+    pub packages: Option<Vec<Arc<RemotePackage>>>,
 }
 
 impl Mirror {
@@ -92,7 +94,15 @@ impl Mirror {
         );
 
         let data = std::fs::read_to_string(self.get_path(config))?;
-        self.packages = match serde_json::from_str(&data) {
+
+        #[derive(Deserialize)]
+        #[serde(transparent)]
+        struct DE {
+            #[serde(deserialize_with = "Mirror::deserialize_dependencies")]
+            data: Vec<Arc<RemotePackage>>,
+        }
+
+        let buf: DE = match serde_json::from_str(&data) {
             Ok(v) => v,
             Err(e) => {
                 return Err(LError::new(
@@ -101,6 +111,7 @@ impl Mirror {
                 ))
             }
         };
+        self.packages = Some(buf.data);
 
         for package in &self.packages {
             trace!("Mirror {} has {:?}", self.name, package);
@@ -114,7 +125,7 @@ impl Mirror {
     /// * `name` - The package name to search for
     /// # Returns
     /// A reference to the package
-    pub fn find_package<'a>(&'a self, name: &str) -> Result<&'a RemotePackage, LError> {
+    pub fn find_package<'a>(&'a self, name: &str) -> Result<Arc<RemotePackage>, LError> {
         match &self.packages {
             None => Err(LError::new(LErrorClass::MirrorNotLoaded, &self.name)),
             Some(p) => match crate::util::find_package(name, p) {
@@ -122,6 +133,23 @@ impl Mirror {
                 Some(p) => Ok(p),
             },
         }
+    }
+
+    /// Deserializes the dependencies of a package
+    pub fn deserialize_dependencies<'de, D>(
+        deserializer: D,
+    ) -> Result<Vec<Arc<RemotePackage>>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        #[serde(transparent)]
+        struct Dependencies {
+            data: Vec<RemotePackage>,
+        }
+
+        let data = Dependencies::deserialize(deserializer)?;
+        Ok(data.data.into_iter().map(|p| Arc::new(p)).collect())
     }
 }
 
@@ -131,7 +159,7 @@ impl Mirror {
 /// * `mirrors` - The mirrors to search in
 /// # Returns
 /// A clone of the package
-pub fn resolve_package(name: &str, mirrors: &Vec<Mirror>) -> Result<RemotePackage, LError> {
+pub fn resolve_package(name: &str, mirrors: &Vec<Mirror>) -> Result<Arc<RemotePackage>, LError> {
     for mirror in mirrors {
         match mirror.find_package(name) {
             Ok(p) => {

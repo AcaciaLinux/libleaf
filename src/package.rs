@@ -4,6 +4,7 @@
 pub mod local;
 pub mod remote;
 
+pub use derive::Package;
 use serde::Deserializer;
 pub use serde::{de, Deserialize, Serialize};
 use std::sync::Arc;
@@ -21,7 +22,7 @@ pub enum Dependencies {
 }
 
 /// This trait represents the common interface for all package variants, be it remote, local or installed
-pub trait Package: Clone {
+pub trait Package {
     /// Get the package name
     fn get_name(&self) -> String;
     /// Set the package name

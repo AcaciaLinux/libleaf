@@ -2,16 +2,16 @@ use serde::Deserialize;
 use std::io::Write;
 
 use super::local::LocalPackage;
-pub use super::{Dependencies, Package};
+pub use super::Dependencies;
+use super::Package;
 use crate::config::Config;
 use crate::download::*;
 use crate::error::*;
 use crate::util::compute_hash;
 use crate::{usererr, usermsg};
-use derive::Package;
 
 /// A remote package is a package available at a mirror for downloading
-#[derive(Package, Debug, Deserialize, Clone)]
+#[derive(Package, Debug, Deserialize)]
 #[allow(dead_code)]
 pub struct RemotePackage {
     name: String,

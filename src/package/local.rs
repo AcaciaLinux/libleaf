@@ -2,11 +2,11 @@ use crate::{config::Config, error::LError, util};
 use serde::Deserialize;
 
 use super::remote::RemotePackage;
-pub use super::{Dependencies, Package};
-use derive::Package;
+pub use super::Dependencies;
+use super::Package;
 
 /// A remote package is a package available locally, ready to be deployed
-#[derive(Package, Debug, Deserialize, Clone)]
+#[derive(Package, Debug, Deserialize)]
 #[allow(dead_code)]
 pub struct LocalPackage {
     name: String,
