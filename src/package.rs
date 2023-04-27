@@ -15,6 +15,92 @@ pub enum PackageVariant {
     Remote(remote::RemotePackage),
 }
 
+impl Package for PackageVariant {
+    fn get_name(&self) -> String {
+        match self {
+            PackageVariant::Local(p) => p.get_name(),
+            PackageVariant::Remote(p) => p.get_name(),
+        }
+    }
+
+    fn set_name(&mut self, name: &str) {
+        match self {
+            PackageVariant::Local(p) => p.set_name(name),
+            PackageVariant::Remote(p) => p.set_name(name),
+        }
+    }
+
+    fn get_version(&self) -> String {
+        match self {
+            PackageVariant::Local(p) => p.get_version(),
+            PackageVariant::Remote(p) => p.get_version(),
+        }
+    }
+
+    fn set_version(&mut self, version: &str) {
+        match self {
+            PackageVariant::Local(p) => p.set_version(version),
+            PackageVariant::Remote(p) => p.set_version(version),
+        }
+    }
+
+    fn get_real_version(&self) -> u64 {
+        match self {
+            PackageVariant::Local(p) => p.get_real_version(),
+            PackageVariant::Remote(p) => p.get_real_version(),
+        }
+    }
+
+    fn set_real_version(&mut self, real_version: u64) {
+        match self {
+            PackageVariant::Local(p) => p.set_real_version(real_version),
+            PackageVariant::Remote(p) => p.set_real_version(real_version),
+        }
+    }
+
+    fn get_description(&self) -> &str {
+        match self {
+            PackageVariant::Local(p) => p.get_description(),
+            PackageVariant::Remote(p) => p.get_description(),
+        }
+    }
+
+    fn set_description(&mut self, description: &str) {
+        match self {
+            PackageVariant::Local(p) => p.set_description(description),
+            PackageVariant::Remote(p) => p.set_description(description),
+        }
+    }
+
+    fn get_dependencies(&self) -> &Dependencies {
+        match self {
+            PackageVariant::Local(p) => p.get_dependencies(),
+            PackageVariant::Remote(p) => p.get_dependencies(),
+        }
+    }
+
+    fn set_dependencies(&mut self, dependencies: Dependencies) {
+        match self {
+            PackageVariant::Local(p) => p.set_dependencies(dependencies),
+            PackageVariant::Remote(p) => p.set_dependencies(dependencies),
+        }
+    }
+
+    fn get_hash(&self) -> String {
+        match self {
+            PackageVariant::Local(p) => p.get_hash(),
+            PackageVariant::Remote(p) => p.get_hash(),
+        }
+    }
+
+    fn set_hash(&mut self, hash: &str) {
+        match self {
+            PackageVariant::Local(p) => p.set_hash(hash),
+            PackageVariant::Remote(p) => p.set_hash(hash),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum Dependencies {
     Unresolved(Vec<String>),
