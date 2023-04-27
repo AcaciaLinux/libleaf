@@ -11,7 +11,7 @@ use crate::util::compute_hash;
 use crate::{usererr, usermsg};
 
 /// A remote package is a package available at a mirror for downloading
-#[derive(Package, Debug, Deserialize)]
+#[derive(Clone, Package, Debug, Deserialize)]
 #[allow(dead_code)]
 pub struct RemotePackage {
     name: String,

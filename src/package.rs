@@ -9,7 +9,7 @@ use serde::Deserializer;
 pub use serde::{de, Deserialize, Serialize};
 use std::sync::Arc;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum PackageVariant {
     Local(local::LocalPackage),
     Remote(remote::RemotePackage),
@@ -108,7 +108,7 @@ pub enum Dependencies {
 }
 
 /// This trait represents the common interface for all package variants, be it remote, local or installed
-pub trait Package {
+pub trait Package: Clone {
     /// Get the package name
     fn get_name(&self) -> String;
     /// Set the package name

@@ -6,7 +6,7 @@ pub use super::Dependencies;
 use super::Package;
 
 /// A remote package is a package available locally, ready to be deployed
-#[derive(Package, Debug, Deserialize)]
+#[derive(Clone, Package, Debug, Deserialize)]
 #[allow(dead_code)]
 pub struct LocalPackage {
     name: String,
