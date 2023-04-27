@@ -6,6 +6,7 @@ use md5::*;
 use serde::{Deserialize, Deserializer};
 use std::fs::File;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::{fmt::Display, fs::create_dir_all, str::FromStr};
 use std::{fs, io};
 use tar::Archive;
@@ -38,8 +39,10 @@ pub fn ensure_dirs(conf: &Config) -> Result<(), LError> {
 /// * `list` - A reference to the vector of Package to search
 /// # Returns
 /// A reference to the package found wrapped in a Option, None if nothing has been found
-pub fn find_package<'a, T: Package>(name: &str, list: &'a [T]) -> Option<&'a T> {
-    list.iter().find(|&package| package.get_name() == name)
+pub fn find_package<T: Package>(name: &str, list: &[Arc<T>]) -> Option<Arc<T>> {
+    list.iter()
+        .find(|package| package.get_name() == name)
+        .cloned()
 }
 
 /// Resolves the whole dependency tree of the package with the provided name
