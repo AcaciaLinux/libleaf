@@ -1,4 +1,5 @@
 use crate::download;
+use crate::package::PackageVariant;
 use crate::{config::Config, usererr, usermsg};
 use serde::{Deserialize, Deserializer};
 use std::path::PathBuf;
@@ -12,7 +13,7 @@ use crate::package::remote::RemotePackage;
 pub struct Mirror {
     pub name: String,
     pub url: String,
-    pub packages: Option<Vec<Arc<RemotePackage>>>,
+    pub packages: Option<Vec<Arc<PackageVariant>>>,
 }
 
 impl Mirror {
@@ -99,7 +100,7 @@ impl Mirror {
         #[serde(transparent)]
         struct DE {
             #[serde(deserialize_with = "Mirror::deserialize_dependencies")]
-            data: Vec<Arc<RemotePackage>>,
+            data: Vec<Arc<PackageVariant>>,
         }
 
         let buf: DE = match serde_json::from_str(&data) {
@@ -125,7 +126,7 @@ impl Mirror {
     /// * `name` - The package name to search for
     /// # Returns
     /// A reference to the package
-    pub fn find_package<'a>(&'a self, name: &str) -> Result<Arc<RemotePackage>, LError> {
+    pub fn find_package(&self, name: &str) -> Result<Arc<PackageVariant>, LError> {
         match &self.packages {
             None => Err(LError::new(LErrorClass::MirrorNotLoaded, &self.name)),
             Some(p) => match crate::util::find_package(name, p) {
@@ -138,7 +139,7 @@ impl Mirror {
     /// Deserializes the dependencies of a package
     pub fn deserialize_dependencies<'de, D>(
         deserializer: D,
-    ) -> Result<Vec<Arc<RemotePackage>>, D::Error>
+    ) -> Result<Vec<Arc<PackageVariant>>, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -149,7 +150,11 @@ impl Mirror {
         }
 
         let data = Dependencies::deserialize(deserializer)?;
-        Ok(data.data.into_iter().map(|p| Arc::new(p)).collect())
+        Ok(data
+            .data
+            .into_iter()
+            .map(|p| Arc::new(PackageVariant::Remote(p)))
+            .collect())
     }
 }
 
@@ -159,12 +164,12 @@ impl Mirror {
 /// * `mirrors` - The mirrors to search in
 /// # Returns
 /// A clone of the package
-pub fn resolve_package(name: &str, mirrors: &Vec<Mirror>) -> Result<Arc<RemotePackage>, LError> {
+pub fn resolve_package(name: &str, mirrors: &Vec<Mirror>) -> Result<Arc<PackageVariant>, LError> {
     for mirror in mirrors {
         match mirror.find_package(name) {
             Ok(p) => {
                 debug!("Mirror {} has package {}", mirror.name, name);
-                return Ok(p.clone());
+                return Ok(p);
             }
             Err(e) => {
                 if e.class == LErrorClass::PackageNotFound {
