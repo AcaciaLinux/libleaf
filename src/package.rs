@@ -9,6 +9,8 @@ use serde::Deserializer;
 pub use serde::{de, Deserialize, Serialize};
 use std::sync::Arc;
 
+use crate::error::{LError, LErrorClass};
+
 #[derive(Clone, Debug)]
 pub enum PackageVariant {
     Local(local::LocalPackage),
@@ -101,10 +103,58 @@ impl Package for PackageVariant {
     }
 }
 
+impl PackageVariant {
+    /// Returns a LocalPackage if this is a local package, else UnexpectedPackageVariant
+    pub fn get_local(&self) -> Result<&local::LocalPackage, LError> {
+        match self {
+            Self::Local(p) => Ok(p),
+            _ => Err(LError::new(
+                LErrorClass::UnexpectedPackageVariant,
+                "Expected local",
+            )),
+        }
+    }
+
+    /// Returns a RemotePackage if this is a remote package, else UnexpectedPackageVariant
+    pub fn get_remote(&self) -> Result<&remote::RemotePackage, LError> {
+        match self {
+            Self::Remote(p) => Ok(p),
+            _ => Err(LError::new(
+                LErrorClass::UnexpectedPackageVariant,
+                "Expected remote",
+            )),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum Dependencies {
     Unresolved(Vec<String>),
     Resolved(Vec<Arc<PackageVariant>>),
+}
+
+impl Dependencies {
+    /// Returns unresolved dependencies if available, else UnexpectedDependenciesVariant
+    pub fn get_unresolved(&self) -> Result<&Vec<String>, LError> {
+        match self {
+            Self::Unresolved(d) => Ok(d),
+            _ => Err(LError::new(
+                LErrorClass::UnexpectedDependenciesVariant,
+                "Expected unresolved",
+            )),
+        }
+    }
+
+    /// Returns resolved dependencies if available, else UnexpectedDependenciesVariant
+    pub fn get_resolved(&self) -> Result<&Vec<Arc<PackageVariant>>, LError> {
+        match self {
+            Self::Resolved(d) => Ok(d),
+            _ => Err(LError::new(
+                LErrorClass::UnexpectedDependenciesVariant,
+                "Expected resolved",
+            )),
+        }
+    }
 }
 
 /// This trait represents the common interface for all package variants, be it remote, local or installed
@@ -152,6 +202,20 @@ pub trait Package: Clone {
             self.get_version(),
             self.get_real_version()
         )
+    }
+
+    /// Convert the Package to one containing an empty Vec of resolved dependencies
+    fn clone_to_resolved(&self) -> Self {
+        let mut s = self.clone();
+        s.set_dependencies(Dependencies::Resolved(Vec::new()));
+        s
+    }
+
+    /// Convert the Package to one containing an empty Vec of unresolved dependencies
+    fn clone_to_unresolved(&self) -> Self {
+        let mut s = self.clone();
+        s.set_dependencies(Dependencies::Unresolved(Vec::new()));
+        s
     }
 }
 
