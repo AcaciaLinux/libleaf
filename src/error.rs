@@ -17,6 +17,9 @@ pub enum LErrorClass {
     JSON,
     MirrorNotLoaded,
     PackageNotFound,
+    UnresolvedDependencies,
+    UnexpectedPackageVariant,
+    UnexpectedDependenciesVariant,
 
     IO(io::ErrorKind),
 }
@@ -67,6 +70,9 @@ impl LError {
             JSON => "Failed to parse json",
             MirrorNotLoaded => "Mirror was not loaded",
             PackageNotFound => "Package could not be found",
+            UnresolvedDependencies => "Some dependencies are unresolved",
+            UnexpectedPackageVariant => "Unexpected package variant",
+            UnexpectedDependenciesVariant => "Unexpected dependencies variant",
             IO(_) => "An IO error occured",
         }
         .to_owned()
