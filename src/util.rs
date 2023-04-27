@@ -1,6 +1,7 @@
 //! Some utility functions to aid the management of the leaf package manager
 
 use crate::mirror::{self, Mirror};
+use crate::package::{Package, PackageVariant};
 use crate::{config::Config, error::*, package::remote::*};
 use md5::*;
 use serde::{Deserialize, Deserializer};
@@ -45,47 +46,62 @@ pub fn find_package<T: Package>(name: &str, list: &[Arc<T>]) -> Option<Arc<T>> {
         .cloned()
 }
 
-/// Resolves the whole dependency tree of the package with the provided name
+/// Resolves the whole dependency tree of the package supplied into `pool`
 /// and sorts them in the order they should be installed in
 /// # Arguments
 /// * `package_name` - The name of the package to resolve
-/// * `dependencies` - A Vec of RemotePackages where the tree gets put into
+/// * `pool` - A Vec of PackageVariants where the tree gets put into
 /// * `mirrors` - A Vec of Mirrors to search for the package and dependencies
-pub fn resolve_dependencies<'a>(
-    package_name: &str,
-    dependencies: &'a mut Vec<RemotePackage>,
-    mirrors: &'a Vec<Mirror>,
+pub fn resolve_dependencies(
+    package: Arc<PackageVariant>,
+    pool: &mut Vec<Arc<PackageVariant>>,
+    mirrors: &Vec<Mirror>,
 ) -> Result<(), LError> {
-    //Try resolving the package
-    let package = mirror::resolve_package(package_name, mirrors)?;
+    package.get_dependencies().get_unresolved()?;
 
-    // Check if this package hasn't already been resolved
-    if find_package(package_name, dependencies).is_some() {
-        trace!(
-            "[resolver] Skipping dependency resolving of package {}",
-            package.get_full_name()
-        );
-        return Ok(());
+    if let Some(found_package) = find_package(&package.get_name(), pool) {
+        trace!("Skipping already resolved package {}", package.get_name());
+        match found_package.get_remote()?.get_dependencies() {
+            Dependencies::Resolved(_) => return Ok(()),
+            Dependencies::Unresolved(_) => {
+                return Err(LError::new(
+                    LErrorClass::UnresolvedDependencies,
+                    format!("Package {:?}", found_package).as_str(),
+                ))
+            }
+        }
     }
 
-    //Push the package to prevent double resolving
-    dependencies.push(package.clone());
+    let mut new_package = package.get_remote()?.clone_to_resolved();
+    let mut new_package_dependencies: Vec<Arc<PackageVariant>> = Vec::new();
 
-    //Go through all dependencies and resolve them
-    for dep in package.get_dependencies() {
-        resolve_dependencies(dep.as_str(), dependencies, mirrors)?;
+    pool.push(Arc::new(PackageVariant::Remote(
+        package.get_remote()?.clone_to_resolved(),
+    )));
+
+    for dep in package.get_dependencies().get_unresolved()? {
+        trace!("Resolving dependency {} of {}", dep, package.get_name());
+        let pkg = mirror::resolve_package(dep, mirrors)?;
+        resolve_dependencies(pkg.clone(), pool, mirrors)?;
+        new_package_dependencies.push(pkg);
     }
 
-    //Move the package back, it gets installed AFTER its dependencies
-    if let Some(pos) = dependencies
-        .iter()
-        .position(|p| p.get_hash() == package.get_hash())
-    {
-        let dep = dependencies.remove(pos);
-        dependencies.push(dep);
-    }
+    new_package.set_dependencies(Dependencies::Resolved(new_package_dependencies));
+    let new_package = Arc::new(PackageVariant::Remote(new_package));
 
-    Ok(())
+    let hash = &new_package.get_hash();
+    match pool.iter().position(|p| &p.get_hash() == hash) {
+        Some(pos) => {
+            trace!("Pulling back package {:?}", new_package.get_name());
+            pool.remove(pos);
+            pool.push(new_package);
+            Ok(())
+        }
+        None => Err(LError::new(
+            LErrorClass::PackageNotFound,
+            format!("Package disappeared: {}", package.get_name()).as_str(),
+        )),
+    }
 }
 
 /// Deserializes a integer from a string
