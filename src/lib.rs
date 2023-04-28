@@ -8,7 +8,6 @@ pub mod package;
 mod pbar;
 pub mod util;
 
-extern crate pretty_env_logger;
 #[macro_use]
 extern crate log;
 
