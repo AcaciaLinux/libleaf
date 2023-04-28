@@ -2,7 +2,7 @@ use super::Config;
 use crate::{
     error::LError,
     mirror::Mirror,
-    package::{local::LocalPackage, remote::RemotePackage},
+    package::{local::LocalPackage, *},
 };
 use std::sync::{Arc, Mutex};
 use threadpool::ThreadPool;
@@ -43,20 +43,23 @@ pub fn update(config: &Config, mirrors: &Vec<Mirror>) -> Result<(), Vec<LError>>
 
 pub fn download_packages(
     config: &Config,
-    packages: &Vec<Arc<RemotePackage>>,
+    packages: &Vec<Arc<PackageVariant>>,
 ) -> Vec<Result<LocalPackage, LError>> {
     let pool = ThreadPool::new(config.download_workers);
-
-    //let errors: Arc<Mutex<Vec<LError>>> = Arc::new(Mutex::new(vec![]));
     let results: Arc<Mutex<Vec<Result<LocalPackage, LError>>>> = Arc::new(Mutex::new(vec![]));
 
     for package in packages {
         let config = config.clone();
         let package = package.clone();
         let results = results.clone();
-        pool.execute(move || {
-            let res = package.fetch(&config);
-            results.lock().expect("Lock results mutex").push(res);
+        pool.execute(move || match package.get_remote() {
+            Ok(package) => {
+                let res = package.fetch(&config);
+                results.lock().expect("Lock results mutex").push(res);
+            }
+            Err(e) => {
+                results.lock().expect("Lock results mutex").push(Err(e));
+            }
         })
     }
 
