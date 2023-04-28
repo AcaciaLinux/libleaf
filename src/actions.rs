@@ -41,6 +41,18 @@ pub fn update(config: &Config, mirrors: &Vec<Mirror>) -> Result<(), Vec<LError>>
     }
 }
 
+/// Loads the cached mirror file of every mirror
+/// # Arguments
+/// * `config` - The configuration to use
+/// * `mirrors` - The mirrors to update
+pub fn load_mirrors(config: &Config, mirrors: &mut Vec<Mirror>) -> Result<(), LError> {
+    for mirror in mirrors.iter_mut() {
+        mirror.load(&config)?;
+    }
+
+    Ok(())
+}
+
 pub fn download_packages(
     config: &Config,
     packages: &Vec<Arc<PackageVariant>>,
