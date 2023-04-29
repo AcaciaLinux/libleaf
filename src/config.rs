@@ -5,6 +5,17 @@ pub mod files;
 use serde::Deserialize;
 use std::path::PathBuf;
 
+use crate::mirror::Mirror;
+
+/// Represents the contents of the config file
+#[derive(Debug, Deserialize)]
+pub struct ConfigFile {
+    #[serde(default)]
+    pub leaf: Config,
+    #[serde(rename(deserialize = "mirror"))]
+    pub mirrors: Option<Vec<Mirror>>,
+}
+
 /// The configuration leaf should process
 #[repr(C)]
 #[derive(Clone, Debug, Deserialize)]

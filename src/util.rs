@@ -1,5 +1,6 @@
 //! Some utility functions to aid the management of the leaf package manager
 
+use crate::config::ConfigFile;
 use crate::mirror::{self, Mirror};
 use crate::package::{Package, PackageVariant};
 use crate::{config::Config, error::*, package::remote::*};
@@ -162,4 +163,24 @@ pub fn compute_hash(source: &Path) -> Result<String, LError> {
     );
 
     Ok(res.to_owned())
+}
+
+/// Parses the leaf config file from the supplied path
+/// # Arguments
+/// * `source` - The path to the config file
+pub fn parse_config_file(source: &Path) -> Result<ConfigFile, LError> {
+    let file_contents = std::fs::read_to_string(source)?;
+    match toml::from_str(&file_contents) {
+        Ok(v) => Ok(v),
+        Err(e) => Err(e.into()),
+    }
+}
+
+impl From<toml::de::Error> for LError {
+    fn from(value: toml::de::Error) -> Self {
+        LError {
+            class: LErrorClass::Unknown,
+            message: Some(value.to_string()),
+        }
+    }
 }
