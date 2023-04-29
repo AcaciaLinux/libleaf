@@ -9,10 +9,12 @@ use crate::error::*;
 use crate::package::remote::RemotePackage;
 
 /// Represents an online mirror leaf can query package lists from to provide packages
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Mirror {
     pub name: String,
     pub url: String,
+
+    #[serde(skip)]
     pub packages: Option<Vec<Arc<PackageVariant>>>,
 }
 

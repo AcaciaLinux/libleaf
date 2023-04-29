@@ -24,3 +24,4 @@ base16ct = "0.2.0"
 threadpool = "1.8.1"
 derive = { path = "./derive" }
 rusqlite = { version = "0.29.0", features = ["bundled"] }
+toml = "0.7.3"
