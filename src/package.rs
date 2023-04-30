@@ -217,6 +217,16 @@ pub trait Package: Clone {
         s.set_dependencies(Dependencies::Unresolved(Vec::new()));
         s
     }
+
+    /// Returns true of this package is a dependency of the provided one
+    /// # Arguments
+    /// * `package` - The package to check
+    fn is_dependency_of<T: Package>(&self, package: &T) -> bool {
+        match package.get_dependencies() {
+            Dependencies::Resolved(deps) => deps.iter().any(|p| p.get_name() == self.get_name()),
+            Dependencies::Unresolved(deps) => deps.iter().any(|p| p == &self.get_name()),
+        }
+    }
 }
 
 impl Clone for Dependencies {
