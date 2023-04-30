@@ -56,21 +56,28 @@ pub fn load_mirrors(config: &Config, mirrors: &mut [Mirror]) -> Result<(), LErro
 pub fn download_packages(
     config: &Config,
     packages: &Vec<Arc<PackageVariant>>,
-) -> Vec<Result<LocalPackage, LError>> {
+) -> Vec<Result<Arc<LocalPackage>, LError>> {
     let pool = ThreadPool::new(config.download_workers);
-    let results: Arc<Mutex<Vec<Result<LocalPackage, LError>>>> = Arc::new(Mutex::new(vec![]));
+    type Return = Vec<Result<Arc<LocalPackage>, LError>>;
+    let results: Arc<Mutex<Return>> = Arc::new(Mutex::new(vec![]));
 
     for package in packages {
         let config = config.clone();
         let package = package.clone();
         let results = results.clone();
-        pool.execute(move || match package.get_remote() {
+        pool.execute(move || match &package.get_remote() {
             Ok(package) => {
                 let res = package.fetch(&config);
-                results.lock().expect("Lock results mutex").push(res);
+                results.lock().expect("Lock results mutex").push(match res {
+                    Ok(res) => Ok(Arc::new(res)),
+                    Err(e) => Err(e),
+                });
             }
             Err(e) => {
-                results.lock().expect("Lock results mutex").push(Err(e));
+                results
+                    .lock()
+                    .expect("Lock results mutex")
+                    .push(Err(e.clone()));
             }
         })
     }
