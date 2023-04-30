@@ -194,6 +194,21 @@ pub fn compute_hash(source: &Path) -> Result<String, LError> {
     Ok(res.to_owned())
 }
 
+/// Extracts the packages from the pool that have no dependers
+/// # Arguments
+/// * `pool` - The pool to search
+pub fn get_root_packages<T: Package>(pool: &[Arc<T>]) -> Vec<Arc<T>> {
+    let mut root_packages: Vec<Arc<T>> = Vec::new();
+
+    for package in pool {
+        if pool.iter().any(|p| p.is_dependency_of(package.as_ref())) {
+            root_packages.push(package.clone());
+        }
+    }
+
+    root_packages
+}
+
 impl From<toml::de::Error> for LError {
     fn from(value: toml::de::Error) -> Self {
         LError {
