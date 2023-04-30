@@ -1,11 +1,12 @@
+pub mod config_file;
 pub mod dirs;
-pub mod ensure_config;
 pub mod files;
 
 use serde::Deserialize;
 use std::path::PathBuf;
 
 use crate::mirror::Mirror;
+pub use config_file::*;
 
 /// Represents the contents of the config file
 #[derive(Debug, Deserialize)]
