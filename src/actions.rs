@@ -41,6 +41,42 @@ pub fn update(config: &Config, mirrors: &Vec<Mirror>) -> Result<(), Vec<LError>>
     }
 }
 
+/// Installs the provided packages using the provided mirrors and config
+/// # Arguments
+/// * `config` - The configuration to use
+/// * `packages` - The package names to install
+/// * `mirrors` - The mirrors to search for the packages
+pub fn install(config: &Config, packages: &[String], mirrors: &mut [Mirror]) -> Result<(), LError> {
+    load_mirrors(config, mirrors)?;
+
+    let mut pool: Vec<Arc<PackageVariant>> = Vec::new();
+
+    for package in packages {
+        let package = crate::mirror::resolve_package(package, mirrors)?;
+        crate::util::resolve_dependencies(package, &mut pool, mirrors)?;
+    }
+
+    let results = download_packages(config, &pool);
+    let mut local_packages: Vec<Arc<LocalPackage>> = Vec::new();
+    for result in results {
+        match result {
+            Ok(res) => {
+                local_packages.push(res);
+            }
+            Err(e) => {
+                return Err(e);
+            }
+        }
+    }
+
+    for pkg in local_packages {
+        pkg.extract(config)?;
+        crate::usermsg!("Extracted package {}", pkg.get_name());
+    }
+
+    Ok(())
+}
+
 /// Loads the cached mirror file of every mirror
 /// # Arguments
 /// * `config` - The configuration to use
