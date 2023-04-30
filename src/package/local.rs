@@ -1,3 +1,5 @@
+use std::path::{Path, PathBuf};
+
 use crate::{config::Config, error::LError, util};
 use serde::Deserialize;
 
@@ -17,6 +19,7 @@ pub struct LocalPackage {
     #[serde(deserialize_with = "crate::package::Dependencies::deserialize_unresolved")]
     dependencies: Dependencies,
     hash: String,
+    file_path: PathBuf,
 }
 
 impl LocalPackage {
@@ -50,17 +53,21 @@ impl LocalPackage {
 
         Ok(())
     }
-}
 
-impl From<&RemotePackage> for LocalPackage {
-    fn from(value: &RemotePackage) -> Self {
+    /// Creates a local package from the supplied remote package using the additional information provided.
+    /// # Arguments
+    /// * `remote` - The remote package to derive
+    /// * `file_path` - The path to the downloaded .lfpkg file
+    /// * `hash` - The local hash of the file
+    pub fn from_remote(remote: &RemotePackage, file_path: &Path, hash: &str) -> LocalPackage {
         Self {
-            name: value.get_name(),
-            version: value.get_version(),
-            real_version: value.get_real_version(),
-            description: value.get_description().to_owned(),
-            dependencies: value.get_dependencies().clone(),
-            hash: "".to_owned(),
+            name: remote.get_name(),
+            version: remote.get_version(),
+            real_version: remote.get_real_version(),
+            description: remote.get_description().to_owned(),
+            dependencies: remote.get_dependencies().clone(),
+            hash: hash.to_string(),
+            file_path: file_path.to_path_buf(),
         }
     }
 }

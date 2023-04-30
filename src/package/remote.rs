@@ -40,8 +40,8 @@ impl RemotePackage {
         if file_path.exists() && compute_hash(&file_path)? == self.hash {
             usermsg!("Skipped fetching of package: {}", self.get_fq_name());
 
-            let mut local_package = LocalPackage::from(self);
-            local_package.set_hash(&self.hash);
+            let hash = self.hash.clone();
+            let local_package = LocalPackage::from_remote(self, &file_path, &hash);
 
             return Ok(local_package);
         }
@@ -63,8 +63,7 @@ impl RemotePackage {
         };
 
         let hash = compute_hash(&file_path).expect("Hash");
-        let mut local_package = LocalPackage::from(self);
-        local_package.set_hash(hash.as_str());
+        let local_package = LocalPackage::from_remote(self, &file_path, &hash);
 
         Ok(local_package)
     }
