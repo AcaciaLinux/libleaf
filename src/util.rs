@@ -46,6 +46,36 @@ pub fn find_package<T: Package>(name: &str, list: &[Arc<T>]) -> Option<Arc<T>> {
         .cloned()
 }
 
+/// Resolves the dependencies of the supplied package by using packages avialable in the pool
+/// # Arguments
+/// * `package` - The package to resolve the dependencies of
+/// * `pool` - The pool to search in
+pub fn resolve_dependencies_pool(
+    package: Arc<PackageVariant>,
+    pool: &[Arc<PackageVariant>],
+) -> Result<Arc<PackageVariant>, LError> {
+    let mut new_package = package.as_ref().clone();
+
+    let mut new_deps: Vec<Arc<PackageVariant>> = Vec::new();
+    for dep in new_package.get_dependencies().get_unresolved()? {
+        let dependency = match find_package(dep, pool) {
+            Some(d) => d,
+            None => return Err(LError::new(LErrorClass::PackageNotFound, dep)),
+        };
+
+        let package = match &dependency.get_dependencies() {
+            Dependencies::Resolved(_) => dependency.clone(),
+            Dependencies::Unresolved(_) => resolve_dependencies_pool(dependency, pool)?,
+        };
+
+        new_deps.push(package)
+    }
+
+    new_package.set_dependencies(Dependencies::Resolved(new_deps));
+
+    Ok(Arc::new(new_package))
+}
+
 /// Resolves the whole dependency tree of the package supplied into `pool`
 /// and sorts them in the order they should be installed in
 /// # Arguments
