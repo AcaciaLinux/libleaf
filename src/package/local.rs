@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::{config::Config, error::LError, util};
+use crate::{config::Config, error::LError, usermsg, util};
 use serde::Deserialize;
 
 use super::remote::RemotePackage;
@@ -23,6 +23,22 @@ pub struct LocalPackage {
 }
 
 impl LocalPackage {
+    /// Deploys this package to the system using the provided config
+    /// # Arguments
+    /// * `config` - The config to reference for deployment
+    pub fn deploy(&self, config: &Config) -> Result<(), LError> {
+        for dep in self.dependencies.get_resolved()? {
+            let dep = dep.get_local()?;
+            dep.deploy(config)?;
+        }
+
+        usermsg!("Deploying package {}", self.get_fq_name());
+
+        self.extract(config)?;
+
+        Ok(())
+    }
+
     /// Extracts the local package into the packages_dir
     /// # Arguments
     /// * `config` - The config to refer to for paths
@@ -31,7 +47,7 @@ impl LocalPackage {
         let target_path = target_dir.join(self.get_full_name());
 
         if target_path.exists() {
-            info!(
+            debug!(
                 "Removing already existing extracted package tree at {}",
                 target_path.to_str().unwrap_or("")
             );
