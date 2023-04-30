@@ -55,7 +55,7 @@ pub fn find_package<T: Package>(name: &str, list: &[Arc<T>]) -> Option<Arc<T>> {
 pub fn resolve_dependencies(
     package: Arc<PackageVariant>,
     pool: &mut Vec<Arc<PackageVariant>>,
-    mirrors: &Vec<Mirror>,
+    mirrors: &[Mirror],
 ) -> Result<(), LError> {
     package.get_dependencies().get_unresolved()?;
 

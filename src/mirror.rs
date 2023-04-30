@@ -166,7 +166,7 @@ impl Mirror {
 /// * `mirrors` - The mirrors to search in
 /// # Returns
 /// A clone of the package
-pub fn resolve_package(name: &str, mirrors: &Vec<Mirror>) -> Result<Arc<PackageVariant>, LError> {
+pub fn resolve_package(name: &str, mirrors: &[Mirror]) -> Result<Arc<PackageVariant>, LError> {
     for mirror in mirrors {
         match mirror.find_package(name) {
             Ok(p) => {
