@@ -3,6 +3,7 @@ use crate::{
     error::LError,
     mirror::Mirror,
     package::{local::LocalPackage, *},
+    util::get_root_packages,
 };
 use std::sync::{Arc, Mutex};
 use threadpool::ThreadPool;
@@ -57,11 +58,11 @@ pub fn install(config: &Config, packages: &[String], mirrors: &mut [Mirror]) -> 
     }
 
     let results = download_packages(config, &pool);
-    let mut local_packages: Vec<Arc<LocalPackage>> = Vec::new();
+    let mut local_packages: Vec<Arc<PackageVariant>> = Vec::new();
     for result in results {
         match result {
             Ok(res) => {
-                local_packages.push(res);
+                local_packages.push(Arc::new(PackageVariant::Local(res.as_ref().clone())));
             }
             Err(e) => {
                 return Err(e);
@@ -69,9 +70,11 @@ pub fn install(config: &Config, packages: &[String], mirrors: &mut [Mirror]) -> 
         }
     }
 
-    for pkg in local_packages {
-        pkg.extract(config)?;
-        crate::usermsg!("Extracted package {}", pkg.get_name());
+    let root_packages = get_root_packages(&local_packages);
+
+    for pkg in root_packages {
+        let pkg = crate::util::resolve_dependencies_pool(pkg, &local_packages)?;
+        pkg.get_local()?.deploy(config)?;
     }
 
     Ok(())
