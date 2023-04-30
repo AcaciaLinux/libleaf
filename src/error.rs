@@ -60,6 +60,28 @@ impl LError {
         LError::new_class(LErrorClass::None)
     }
 
+    /// Appends the supplied message to the message of the error
+    /// in the following form: `<error message>: <message>`
+    /// # Arguments
+    /// * `message` - The message to prepend
+    pub fn append(&mut self, message: &str) {
+        self.message = match &self.message {
+            None => Some(message.to_string()),
+            Some(error_message) => Some(format!("{}: {}", error_message, message)),
+        };
+    }
+
+    /// Prepends the supplied message to the message of the error
+    /// in the following form: `<message>: <error message>`
+    /// # Arguments
+    /// * `message` - The message to prepend
+    pub fn prepend(&mut self, message: &str) {
+        self.message = match &self.message {
+            None => Some(message.to_string()),
+            Some(error_message) => Some(format!("{}: {}", message, error_message)),
+        };
+    }
+
     /// Converts the error class to a human-readable string
     pub fn ec_str(&self) -> String {
         use LErrorClass::*;
