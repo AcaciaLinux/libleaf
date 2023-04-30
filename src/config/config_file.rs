@@ -9,7 +9,7 @@ pub const DEFAULT_CONFIG: &str = include_str!("../../defconfig.conf");
 /// Uses the supplied root to determine the best location for retrieving the config file.
 /// If there is nothing available, this returns None.
 ///
-/// First, this searches `/etc/leaf/leaf.conf`, if that does not exist, it searches for 
+/// First, this searches `/etc/leaf/leaf.conf`, if that does not exist, it searches for
 /// `/lib/leaf/leaf.conf` and if even that does not exist, this returns None.
 /// # Arguments
 /// * `root` - The root to search in for the config file
