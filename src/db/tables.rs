@@ -38,7 +38,7 @@ impl DBConnection {
             "CREATE TABLE IF NOT EXISTS files (
                 package         INTEGER NOT NULL,
                 path            TEXT UNIQUE NOT NULL,
-                isfile          BOOLEAN NOT NULL,
+                isdir           BOOLEAN NOT NULL,
                 hash            TEXT,
 
                 FOREIGN KEY (package) REFERENCES packages(id) ON UPDATE CASCADE ON DELETE CASCADE
