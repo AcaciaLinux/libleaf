@@ -19,13 +19,15 @@ CREATE TABLE IF NOT EXISTS dependencies (
     PRIMARY KEY(depender, dependency)
 );
 
-CREATE TABLE IF NOT EXISTS files (
-    package         INTEGER NOT NULL,
-    path            TEXT UNIQUE NOT NULL,
-    isdir           BOOLEAN NOT NULL,
+CREATE TABLE IF NOT EXISTS fsentries (
+    id              INTEGER PRIMARY KEY,
+    parent          INTEGER NOT NULL,
+    package         INTEGER,
+    name            TEXT UNIQUE NOT NULL,
     hash            TEXT,
 
-    FOREIGN KEY (package) REFERENCES packages(id) ON UPDATE CASCADE ON DELETE CASCADE
+    FOREIGN KEY (package) REFERENCES packages(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (parent) REFERENCES files(id)
 );
 
 CREATE TABLE IF NOT EXISTS registry (
