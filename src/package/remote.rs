@@ -7,7 +7,7 @@ use super::Package;
 use crate::config::Config;
 use crate::download::*;
 use crate::error::*;
-use crate::util::compute_hash;
+use crate::util;
 use crate::{usererr, usermsg};
 
 /// A remote package is a package available at a mirror for downloading
@@ -37,7 +37,7 @@ impl RemotePackage {
             .join(self.get_full_name() + ".lfpkg");
 
         //Check if a file exists and if so, check if the hash matches and skip the download
-        if file_path.exists() && compute_hash(&file_path)? == self.hash {
+        if file_path.exists() && util::hash::hash_file(&file_path)? == self.hash {
             usermsg!("Skipped fetching of package: {}", self.get_fq_name());
 
             let hash = self.hash.clone();
@@ -62,7 +62,7 @@ impl RemotePackage {
             ),
         };
 
-        let hash = compute_hash(&file_path).expect("Hash");
+        let hash = util::hash::hash_file(&file_path).expect("Hash");
         let local_package = LocalPackage::from_remote(self, &file_path, &hash);
 
         Ok(local_package)

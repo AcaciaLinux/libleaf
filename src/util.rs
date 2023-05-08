@@ -3,10 +3,8 @@
 use crate::mirror::{self, Mirror};
 use crate::package::{Package, PackageVariant};
 use crate::{config::Config, error::*, package::remote::*};
-use md5::*;
 use serde::{Deserialize, Deserializer};
 use std::fs::File;
-use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::{fmt::Display, fs::create_dir_all, str::FromStr};
@@ -14,6 +12,7 @@ use tar::Archive;
 use xz::read::XzDecoder;
 
 pub mod fs;
+pub mod hash;
 
 fn ensure_dir(dir: &PathBuf) -> Result<(), LError> {
     if !dir.exists() {
@@ -169,31 +168,6 @@ pub fn extract(source: &Path, destination: &Path) -> Result<(), LError> {
     archive.unpack(destination)?;
 
     Ok(())
-}
-
-/// Computes the MD5 hash of the file supplied as source
-/// # Arguments
-/// * `source` - The source file to hash
-pub fn compute_hash(source: &Path) -> Result<String, LError> {
-    //Open the file
-    let mut file = std::fs::File::open(source)?;
-
-    //Creat the hasher and hash
-    let mut hasher = Md5::new();
-    io::copy(&mut file, &mut hasher)?;
-
-    //Finalize and compute base16 string
-    let mut buf = [0u8; 32];
-    let hash = hasher.finalize();
-    let res = base16ct::lower::encode_str(&hash, &mut buf).expect("Convert hash to base16");
-
-    trace!(
-        "Computed hash of file {}: {}",
-        source.to_str().unwrap_or(""),
-        res
-    );
-
-    Ok(res.to_owned())
 }
 
 /// Extracts the packages from the pool that have no dependers

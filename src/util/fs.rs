@@ -2,6 +2,8 @@
 use crate::error::LError;
 use std::path::Path;
 
+use crate::util;
+
 /// Represents a filesystem entry stored in the database
 #[derive(Clone, Debug)]
 pub struct FSEntry {
@@ -45,8 +47,16 @@ pub fn index(directory: &Path) -> Result<Vec<FSEntry>, LError> {
             hash: {
                 if isdir {
                     None
+                } else if path.is_symlink() {
+                    let target_path = path.read_link()?;
+                    trace!(
+                        "Symlink {} points to {}, hashing target",
+                        path.to_string_lossy(),
+                        target_path.to_string_lossy()
+                    );
+                    Some(util::hash::hash_str(&target_path.to_string_lossy()))
                 } else {
-                    Some(crate::util::compute_hash(&path)?)
+                    Some(util::hash::hash_file(&path)?)
                 }
             },
             children: Vec::new(),
