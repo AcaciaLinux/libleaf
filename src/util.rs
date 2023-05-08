@@ -6,10 +6,10 @@ use crate::{config::Config, error::*, package::remote::*};
 use md5::*;
 use serde::{Deserialize, Deserializer};
 use std::fs::File;
+use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::{fmt::Display, fs::create_dir_all, str::FromStr};
-use std::{fs, io};
 use tar::Archive;
 use xz::read::XzDecoder;
 
@@ -174,7 +174,7 @@ pub fn extract(source: &Path, destination: &Path) -> Result<(), LError> {
 /// * `source` - The source file to hash
 pub fn compute_hash(source: &Path) -> Result<String, LError> {
     //Open the file
-    let mut file = fs::File::open(source)?;
+    let mut file = std::fs::File::open(source)?;
 
     //Creat the hasher and hash
     let mut hasher = Md5::new();
@@ -201,7 +201,7 @@ pub fn get_root_packages<T: Package>(pool: &[Arc<T>]) -> Vec<Arc<T>> {
     let mut root_packages: Vec<Arc<T>> = Vec::new();
 
     for package in pool {
-        if pool.iter().any(|p| p.is_dependency_of(package.as_ref())) {
+        if !pool.iter().any(|p| package.is_dependency_of(p.as_ref())) {
             root_packages.push(package.clone());
         }
     }
