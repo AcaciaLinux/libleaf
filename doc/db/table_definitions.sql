@@ -21,13 +21,14 @@ CREATE TABLE IF NOT EXISTS dependencies (
 
 CREATE TABLE IF NOT EXISTS fsentries (
     id              INTEGER PRIMARY KEY,
-    parent          INTEGER NOT NULL,
-    package         INTEGER,
-    name            TEXT UNIQUE NOT NULL,
+    parent          INTEGER,
+    package         INTEGER NOT NULL,
+    name            TEXT NOT NULL,
     hash            TEXT,
 
+    UNIQUE (parent, package, name),
     FOREIGN KEY (package) REFERENCES packages(id) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (parent) REFERENCES files(id)
+    FOREIGN KEY (parent) REFERENCES fsentries(id)
 );
 
 CREATE TABLE IF NOT EXISTS registry (
