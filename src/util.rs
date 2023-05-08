@@ -13,6 +13,8 @@ use std::{fmt::Display, fs::create_dir_all, str::FromStr};
 use tar::Archive;
 use xz::read::XzDecoder;
 
+pub mod fs;
+
 fn ensure_dir(dir: &PathBuf) -> Result<(), LError> {
     if !dir.exists() {
         info!("Creating missing directory {}", dir.to_str().unwrap_or(""));
