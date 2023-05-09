@@ -2,6 +2,7 @@
 use rusqlite::{Connection, OpenFlags};
 use std::path::Path;
 
+use crate::error::LError;
 mod reg;
 mod tables;
 
@@ -14,7 +15,7 @@ impl DBConnection {
     /// Creates a new connection opening the supplied file
     /// # Arguments
     /// * `path` - The path to read from
-    pub fn open(path: &Path) -> Result<DBConnection, rusqlite::Error> {
+    pub fn open(path: &Path) -> Result<DBConnection, LError> {
         let connection = Connection::open_with_flags(
             path,
             OpenFlags::SQLITE_OPEN_READ_WRITE

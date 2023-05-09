@@ -19,6 +19,7 @@ pub enum LErrorClass {
     CURL,
     JSON,
     TOML,
+    SQL,
     MirrorNotLoaded,
     PackageNotFound,
     UnresolvedDependencies,
@@ -95,6 +96,7 @@ impl LError {
             CURL => "Error in CURL occured",
             JSON => "Failed to parse json",
             TOML => "Failed to parse toml",
+            SQL => "A SQL error occured",
             MirrorNotLoaded => "Mirror was not loaded",
             PackageNotFound => "Package could not be found",
             UnresolvedDependencies => "Some dependencies are unresolved",
@@ -134,6 +136,15 @@ impl From<std::io::Error> for LError {
         LError {
             class: LErrorClass::IO(value.kind()),
             message: Some(value.to_string()),
+        }
+    }
+}
+
+impl From<rusqlite::Error> for LError {
+    fn from(value: rusqlite::Error) -> Self {
+        LError {
+            class: crate::error::LErrorClass::SQL,
+            message: value.sqlite_error().map(|e| e.to_string()),
         }
     }
 }
