@@ -1,5 +1,8 @@
 //! The error leaf works with
 
+mod ext;
+pub use ext::*;
+
 use std::{
     error,
     fmt::{self, Display},
