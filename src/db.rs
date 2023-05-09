@@ -6,7 +6,9 @@ use crate::error::LError;
 mod reg;
 mod tables;
 
+mod fsentries;
 mod packages;
+pub use fsentries::*;
 pub use packages::*;
 
 /// Represents a connection to a database
