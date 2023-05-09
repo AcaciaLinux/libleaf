@@ -6,6 +6,9 @@ use crate::error::LError;
 mod reg;
 mod tables;
 
+mod packages;
+pub use packages::*;
+
 /// Represents a connection to a database
 pub struct DBConnection {
     connection: Connection,
