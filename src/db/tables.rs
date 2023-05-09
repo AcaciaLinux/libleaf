@@ -27,7 +27,7 @@ impl DBConnection {
                 dependency      INTEGER NOT NULL,
 
                 FOREIGN KEY(depender) REFERENCES packages(id) ON UPDATE CASCADE ON DELETE CASCADE,
-                FOREIGN KEY(dependency) REFERENCES packages(id) ON UPDATE CASCADE ON DELETE CASCADE,
+                FOREIGN KEY(dependency) REFERENCES packages(id) ON UPDATE CASCADE ON DELETE RESTRICT,
 
                 PRIMARY KEY(depender, dependency)
             )",
