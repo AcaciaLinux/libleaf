@@ -86,4 +86,27 @@ impl LocalPackage {
             file_path: file_path.to_path_buf(),
         }
     }
+
+    /// Creates a local package from the supplied remote package using the additional information provided.
+    ///
+    /// Dependencies become unresolved
+    /// # Arguments
+    /// * `remote` - The remote package to derive
+    /// * `file_path` - The path to the downloaded .lfpkg file
+    /// * `hash` - The local hash of the file
+    pub fn from_remote_unresolved(
+        remote: &RemotePackage,
+        file_path: &Path,
+        hash: &str,
+    ) -> LocalPackage {
+        Self {
+            name: remote.get_name(),
+            version: remote.get_version(),
+            real_version: remote.get_real_version(),
+            description: remote.get_description().to_owned(),
+            dependencies: remote.get_dependencies().clone_unresolved(),
+            hash: hash.to_string(),
+            file_path: file_path.to_path_buf(),
+        }
+    }
 }

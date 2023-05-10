@@ -41,7 +41,7 @@ impl RemotePackage {
             usermsg!("Skipped fetching of package: {}", self.get_fq_name());
 
             let hash = self.hash.clone();
-            let local_package = LocalPackage::from_remote(self, &file_path, &hash);
+            let local_package = LocalPackage::from_remote_unresolved(self, &file_path, &hash);
 
             return Ok(local_package);
         }
@@ -63,7 +63,7 @@ impl RemotePackage {
         };
 
         let hash = util::hash::hash_file(&file_path).expect("Hash");
-        let local_package = LocalPackage::from_remote(self, &file_path, &hash);
+        let local_package = LocalPackage::from_remote_unresolved(self, &file_path, &hash);
 
         Ok(local_package)
     }

@@ -180,6 +180,22 @@ impl Dependencies {
             )),
         }
     }
+
+    /// Clones the dependencies, but moves all dependencies to be unresolved
+    pub fn clone_unresolved(&self) -> Self {
+        match self {
+            Self::Unresolved(arg0) => Self::Unresolved(arg0.clone()),
+            Self::Resolved(arg0) => Self::Unresolved(
+                arg0.iter()
+                    .map(|pkg| match pkg.as_ref() {
+                        PackageVariant::Local(pkg) => pkg.get_name(),
+                        PackageVariant::Remote(pkg) => pkg.get_name(),
+                        PackageVariant::Installed(pkg) => pkg.get_name(),
+                    })
+                    .collect(),
+            ),
+        }
+    }
 }
 
 /// This trait represents the common interface for all package variants, be it remote, local or installed
@@ -259,14 +275,7 @@ impl Clone for Dependencies {
     fn clone(&self) -> Self {
         match self {
             Self::Unresolved(arg0) => Self::Unresolved(arg0.clone()),
-            Self::Resolved(arg0) => Self::Unresolved(
-                arg0.iter()
-                    .map(|pkg| match pkg.as_ref() {
-                        PackageVariant::Local(pkg) => pkg.get_name(),
-                        PackageVariant::Remote(pkg) => pkg.get_name(),
-                    })
-                    .collect(),
-            ),
+            Self::Resolved(arg0) => Self::Resolved(arg0.clone()),
         }
     }
 }
