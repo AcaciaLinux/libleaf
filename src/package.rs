@@ -1,6 +1,7 @@
 //! A package is the main work horse of the leaf package manager.
 //! Every variant of a package implements the trait Package.
 
+pub mod installed;
 pub mod local;
 pub mod remote;
 
@@ -15,6 +16,7 @@ use crate::error::{LError, LErrorClass};
 pub enum PackageVariant {
     Local(local::LocalPackage),
     Remote(remote::RemotePackage),
+    Installed(installed::InstalledPackage),
 }
 
 impl Package for PackageVariant {
@@ -22,6 +24,7 @@ impl Package for PackageVariant {
         match self {
             PackageVariant::Local(p) => p.get_name(),
             PackageVariant::Remote(p) => p.get_name(),
+            PackageVariant::Installed(p) => p.get_name(),
         }
     }
 
@@ -29,6 +32,7 @@ impl Package for PackageVariant {
         match self {
             PackageVariant::Local(p) => p.set_name(name),
             PackageVariant::Remote(p) => p.set_name(name),
+            PackageVariant::Installed(p) => p.set_name(name),
         }
     }
 
@@ -36,6 +40,7 @@ impl Package for PackageVariant {
         match self {
             PackageVariant::Local(p) => p.get_version(),
             PackageVariant::Remote(p) => p.get_version(),
+            PackageVariant::Installed(p) => p.get_version(),
         }
     }
 
@@ -43,6 +48,7 @@ impl Package for PackageVariant {
         match self {
             PackageVariant::Local(p) => p.set_version(version),
             PackageVariant::Remote(p) => p.set_version(version),
+            PackageVariant::Installed(p) => p.set_version(version),
         }
     }
 
@@ -50,6 +56,7 @@ impl Package for PackageVariant {
         match self {
             PackageVariant::Local(p) => p.get_real_version(),
             PackageVariant::Remote(p) => p.get_real_version(),
+            PackageVariant::Installed(p) => p.get_real_version(),
         }
     }
 
@@ -57,6 +64,7 @@ impl Package for PackageVariant {
         match self {
             PackageVariant::Local(p) => p.set_real_version(real_version),
             PackageVariant::Remote(p) => p.set_real_version(real_version),
+            PackageVariant::Installed(p) => p.set_real_version(real_version),
         }
     }
 
@@ -64,6 +72,7 @@ impl Package for PackageVariant {
         match self {
             PackageVariant::Local(p) => p.get_description(),
             PackageVariant::Remote(p) => p.get_description(),
+            PackageVariant::Installed(p) => p.get_description(),
         }
     }
 
@@ -71,6 +80,7 @@ impl Package for PackageVariant {
         match self {
             PackageVariant::Local(p) => p.set_description(description),
             PackageVariant::Remote(p) => p.set_description(description),
+            PackageVariant::Installed(p) => p.set_description(description),
         }
     }
 
@@ -78,6 +88,7 @@ impl Package for PackageVariant {
         match self {
             PackageVariant::Local(p) => p.get_dependencies(),
             PackageVariant::Remote(p) => p.get_dependencies(),
+            PackageVariant::Installed(p) => p.get_dependencies(),
         }
     }
 
@@ -85,6 +96,7 @@ impl Package for PackageVariant {
         match self {
             PackageVariant::Local(p) => p.set_dependencies(dependencies),
             PackageVariant::Remote(p) => p.set_dependencies(dependencies),
+            PackageVariant::Installed(p) => p.set_dependencies(dependencies),
         }
     }
 
@@ -92,6 +104,7 @@ impl Package for PackageVariant {
         match self {
             PackageVariant::Local(p) => p.get_hash(),
             PackageVariant::Remote(p) => p.get_hash(),
+            PackageVariant::Installed(p) => p.get_hash(),
         }
     }
 
@@ -99,6 +112,7 @@ impl Package for PackageVariant {
         match self {
             PackageVariant::Local(p) => p.set_hash(hash),
             PackageVariant::Remote(p) => p.set_hash(hash),
+            PackageVariant::Installed(p) => p.set_hash(hash),
         }
     }
 }
@@ -122,6 +136,17 @@ impl PackageVariant {
             _ => Err(LError::new(
                 LErrorClass::UnexpectedPackageVariant,
                 "Expected remote",
+            )),
+        }
+    }
+
+    /// Returns a InstalledPackage if this is a installed package, else UnexpectedPackageVariant
+    pub fn get_installed(&self) -> Result<&installed::InstalledPackage, LError> {
+        match self {
+            Self::Installed(p) => Ok(p),
+            _ => Err(LError::new(
+                LErrorClass::UnexpectedPackageVariant,
+                "Expected installed",
             )),
         }
     }
