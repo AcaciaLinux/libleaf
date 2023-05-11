@@ -44,8 +44,9 @@ impl LocalPackage {
     /// * `config` - The config to refer to for paths
     pub fn extract(&self, config: &Config) -> Result<(), LError> {
         let target_dir = config.get_packages_dir();
-        let target_path = target_dir.join(self.get_full_name());
+        let target_path = self.get_extracted_dir(config);
 
+        // Remove the target path if it already exists
         if target_path.exists() {
             debug!(
                 "Removing already existing extracted package tree at {}",
@@ -54,18 +55,21 @@ impl LocalPackage {
             std::fs::remove_dir_all(target_path)?;
         }
 
-        info!(
+        // Now extract the package and take the time
+        debug!(
             "Extracting package {} into {}",
-            self.get_full_name(),
-            target_dir.to_str().unwrap_or("")
+            self.get_fq_name(),
+            target_dir.to_string_lossy()
         );
 
+        let start = Instant::now();
         util::extract(
             &config
                 .get_download_dir()
                 .join(self.get_full_name() + ".lfpkg"),
             &config.get_packages_dir(),
         )?;
+        debug!("Took {} ms", start.elapsed().as_millis());
 
         Ok(())
     }
@@ -108,5 +112,26 @@ impl LocalPackage {
             hash: hash.to_string(),
             file_path: file_path.to_path_buf(),
         }
+    }
+
+    /// Returns the directory that results when the package is extracted
+    ///
+    /// Example: package `glibc-2.36` -> `<package_dir/glibc-2.36/`
+    /// # Arguments
+    /// * `config` - The configuration to use for getting the directories
+    pub fn get_extracted_dir(&self, config: &Config) -> PathBuf {
+        config.get_packages_dir().join(self.get_full_name())
+    }
+
+    /// Returns the directory that the package root filesystem lives in
+    ///
+    /// Example: package `glibc-2.36` -> `<package_dir/glibc-2.36/data/`
+    /// # Arguments
+    /// * `config` - The configuration to use for getting the directories
+    pub fn get_data_dir(&self, config: &Config) -> PathBuf {
+        config
+            .get_packages_dir()
+            .join(self.get_full_name())
+            .join("data")
     }
 }
