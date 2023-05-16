@@ -43,26 +43,8 @@ impl InstalledPackage {
             name: local.get_name(),
             version: local.get_version(),
             real_version: local.get_real_version(),
-            description: local.get_description().to_owned(),
+            description: local.get_description(),
             dependencies: local.get_dependencies().clone(),
-            hash: local.get_hash(),
-            files,
-        }
-    }
-
-    /// Creates a installed package from the supplied local package using the additional information provided.
-    ///
-    /// The dependencies of this package become unresolved
-    /// # Arguments
-    /// * `remote` - The remote package to derive
-    /// * `files` - The files provied by this package
-    pub fn from_local_unresolved(local: LocalPackage, files: Vec<FSEntry>) -> InstalledPackage {
-        Self {
-            name: local.get_name(),
-            version: local.get_version(),
-            real_version: local.get_real_version(),
-            description: local.get_description().to_owned(),
-            dependencies: local.get_dependencies().clone_unresolved(),
             hash: local.get_hash(),
             files,
         }
@@ -82,7 +64,7 @@ impl InstalledPackage {
             description: row.get(3)?,
             hash: row.get(4)?,
             dependencies: Dependencies::Unresolved(vec![]),
-            files: vec![],
+            files: Vec::new(),
         })
     }
 }

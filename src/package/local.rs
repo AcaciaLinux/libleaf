@@ -1,11 +1,22 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    slice::Iter,
+};
 
-use crate::{config::Config, error::LError, usermsg, util};
+use crate::{
+    config::Config,
+    db::{DBConnection, DBTransaction},
+    error::*,
+    package::installed::InstalledPackage,
+    util::{self, fs::FSEntry},
+    *,
+};
 use serde::Deserialize;
 
 use super::remote::RemotePackage;
 pub use super::Dependencies;
 use super::Package;
+use std::time::*;
 
 /// A remote package is a package available locally, ready to be deployed
 #[derive(Clone, Package, Debug, Deserialize)]
@@ -84,31 +95,8 @@ impl LocalPackage {
             name: remote.get_name(),
             version: remote.get_version(),
             real_version: remote.get_real_version(),
-            description: remote.get_description().to_owned(),
+            description: remote.get_description(),
             dependencies: remote.get_dependencies().clone(),
-            hash: hash.to_string(),
-            file_path: file_path.to_path_buf(),
-        }
-    }
-
-    /// Creates a local package from the supplied remote package using the additional information provided.
-    ///
-    /// Dependencies become unresolved
-    /// # Arguments
-    /// * `remote` - The remote package to derive
-    /// * `file_path` - The path to the downloaded .lfpkg file
-    /// * `hash` - The local hash of the file
-    pub fn from_remote_unresolved(
-        remote: &RemotePackage,
-        file_path: &Path,
-        hash: &str,
-    ) -> LocalPackage {
-        Self {
-            name: remote.get_name(),
-            version: remote.get_version(),
-            real_version: remote.get_real_version(),
-            description: remote.get_description().to_owned(),
-            dependencies: remote.get_dependencies().clone_unresolved(),
             hash: hash.to_string(),
             file_path: file_path.to_path_buf(),
         }

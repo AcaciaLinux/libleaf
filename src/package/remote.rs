@@ -1,14 +1,18 @@
 use serde::Deserialize;
 use std::io::Write;
+use std::sync::RwLock;
 
 use super::local::LocalPackage;
 pub use super::Dependencies;
 use super::Package;
+use super::PackageRef;
+use super::PackageVariant;
 use crate::config::Config;
 use crate::download::*;
 use crate::error::*;
 use crate::util;
 use crate::{usererr, usermsg};
+use std::sync::Arc;
 
 /// A remote package is a package available at a mirror for downloading
 #[derive(Clone, Package, Debug, Deserialize)]
@@ -29,7 +33,7 @@ impl RemotePackage {
     /// Uses the provided configuration to fetch this remote package to the local system
     /// # Arguments
     /// * `config` - The configuration to use for acquiring information about the fetch process
-    pub fn fetch(&self, config: &Config) -> Result<LocalPackage, LError> {
+    pub fn fetch(&self, config: &Config) -> Result<PackageRef, LError> {
         crate::util::ensure_dirs(config)?;
 
         let file_path = config
@@ -41,7 +45,9 @@ impl RemotePackage {
             usermsg!("Skipped fetching of package: {}", self.get_fq_name());
 
             let hash = self.hash.clone();
-            let local_package = LocalPackage::from_remote_unresolved(self, &file_path, &hash);
+            let local_package = Arc::new(RwLock::new(PackageVariant::Local(
+                LocalPackage::from_remote(self, &file_path, &hash),
+            )));
 
             return Ok(local_package);
         }
@@ -63,7 +69,9 @@ impl RemotePackage {
         };
 
         let hash = util::hash::hash_file(&file_path).expect("Hash");
-        let local_package = LocalPackage::from_remote_unresolved(self, &file_path, &hash);
+        let local_package = Arc::new(RwLock::new(PackageVariant::Local(
+            LocalPackage::from_remote(self, &file_path, &hash),
+        )));
 
         Ok(local_package)
     }

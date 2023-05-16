@@ -5,10 +5,12 @@ pub mod installed;
 pub mod local;
 pub mod remote;
 
+mod packageref;
+pub use packageref::*;
+
 pub use derive::Package;
 use serde::Deserializer;
 pub use serde::{de, Deserialize, Serialize};
-use std::sync::Arc;
 
 use crate::error::{LError, LErrorClass};
 
@@ -68,7 +70,7 @@ impl Package for PackageVariant {
         }
     }
 
-    fn get_description(&self) -> &str {
+    fn get_description(&self) -> String {
         match self {
             PackageVariant::Local(p) => p.get_description(),
             PackageVariant::Remote(p) => p.get_description(),
@@ -155,7 +157,7 @@ impl PackageVariant {
 #[derive(Debug)]
 pub enum Dependencies {
     Unresolved(Vec<String>),
-    Resolved(Vec<Arc<PackageVariant>>),
+    Resolved(Vec<PackageRef>),
 }
 
 impl Dependencies {
@@ -171,29 +173,13 @@ impl Dependencies {
     }
 
     /// Returns resolved dependencies if available, else UnexpectedDependenciesVariant
-    pub fn get_resolved(&self) -> Result<&Vec<Arc<PackageVariant>>, LError> {
+    pub fn get_resolved(&self) -> Result<&Vec<PackageRef>, LError> {
         match self {
             Self::Resolved(d) => Ok(d),
             _ => Err(LError::new(
                 LErrorClass::UnexpectedDependenciesVariant,
                 "Expected resolved",
             )),
-        }
-    }
-
-    /// Clones the dependencies, but moves all dependencies to be unresolved
-    pub fn clone_unresolved(&self) -> Self {
-        match self {
-            Self::Unresolved(arg0) => Self::Unresolved(arg0.clone()),
-            Self::Resolved(arg0) => Self::Unresolved(
-                arg0.iter()
-                    .map(|pkg| match pkg.as_ref() {
-                        PackageVariant::Local(pkg) => pkg.get_name(),
-                        PackageVariant::Remote(pkg) => pkg.get_name(),
-                        PackageVariant::Installed(pkg) => pkg.get_name(),
-                    })
-                    .collect(),
-            ),
         }
     }
 }
@@ -216,7 +202,7 @@ pub trait Package: Clone {
     fn set_real_version(&mut self, real_version: u64);
 
     /// Get the description of the package
-    fn get_description(&self) -> &str;
+    fn get_description(&self) -> String;
     /// Set the description for the package
     fn set_description(&mut self, description: &str);
 
@@ -249,13 +235,6 @@ pub trait Package: Clone {
     fn clone_to_resolved(&self) -> Self {
         let mut s = self.clone();
         s.set_dependencies(Dependencies::Resolved(Vec::new()));
-        s
-    }
-
-    /// Convert the Package to one containing an empty Vec of unresolved dependencies
-    fn clone_to_unresolved(&self) -> Self {
-        let mut s = self.clone();
-        s.set_dependencies(Dependencies::Unresolved(Vec::new()));
         s
     }
 
