@@ -5,7 +5,7 @@ mod download;
 pub mod error;
 pub mod mirror;
 pub mod package;
-mod pbar;
+pub mod pbar;
 pub mod util;
 
 #[macro_use]
