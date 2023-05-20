@@ -33,6 +33,9 @@ pub struct Config {
     #[serde(default = "default_render_bar")]
     pub render_bar: bool,
 
+    /// If leaf should work aggressively (overwrite files, etc...)
+    pub force: Option<bool>,
+
     /// The root directory leaf should work on (default: `/`)
     pub root: Option<PathBuf>,
 
@@ -60,6 +63,7 @@ impl Default for Config {
             loglevel: LogLevel::Default,
             download_workers: 5,
             render_bar: true,
+            force: None,
             root: None,
             config_dir: None,
             config_file: None,
