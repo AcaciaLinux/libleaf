@@ -39,3 +39,51 @@ impl<T> LErrorExt<T> for Result<T, LError> {
         }
     }
 }
+
+impl<T> LErrorExt<T> for Result<T, rusqlite::Error> {
+    fn err_append(self, message: &str) -> Result<T, LError> {
+        match self {
+            Ok(v) => Ok(v),
+            Err(e) => {
+                let mut le = LError::from(e);
+                le.append(message);
+                Err(le)
+            }
+        }
+    }
+
+    fn err_prepend(self, message: &str) -> Result<T, LError> {
+        match self {
+            Ok(v) => Ok(v),
+            Err(e) => {
+                let mut le = LError::from(e);
+                le.prepend(message);
+                Err(le)
+            }
+        }
+    }
+}
+
+impl<T> LErrorExt<T> for Result<T, std::io::Error> {
+    fn err_append(self, message: &str) -> Result<T, LError> {
+        match self {
+            Ok(v) => Ok(v),
+            Err(e) => {
+                let mut le = LError::from(e);
+                le.append(message);
+                Err(le)
+            }
+        }
+    }
+
+    fn err_prepend(self, message: &str) -> Result<T, LError> {
+        match self {
+            Ok(v) => Ok(v),
+            Err(e) => {
+                let mut le = LError::from(e);
+                le.prepend(message);
+                Err(le)
+            }
+        }
+    }
+}
