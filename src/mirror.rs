@@ -1,9 +1,9 @@
 use crate::download;
-use crate::package::PackageVariant;
+use crate::package::{PackageRef, PackageVariant};
 use crate::{config::Config, usererr, usermsg};
 use serde::{Deserialize, Deserializer};
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 use crate::error::*;
 use crate::package::remote::RemotePackage;
@@ -166,12 +166,12 @@ impl Mirror {
 /// * `mirrors` - The mirrors to search in
 /// # Returns
 /// A clone of the package
-pub fn resolve_package(name: &str, mirrors: &[Mirror]) -> Result<Arc<PackageVariant>, LError> {
+pub fn resolve_package(name: &str, mirrors: &[Mirror]) -> Result<PackageRef, LError> {
     for mirror in mirrors {
         match mirror.find_package(name) {
             Ok(p) => {
                 debug!("Mirror {} has package {}", mirror.name, name);
-                return Ok(p);
+                return Ok(Arc::new(RwLock::new(p.as_ref().clone())));
             }
             Err(e) => {
                 if e.class == LErrorClass::PackageNotFound {
