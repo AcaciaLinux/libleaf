@@ -20,7 +20,7 @@ impl<'a> DBTransaction<'a> {
             .prepare("INSERT INTO fsentries (name, package, parent, hash) VALUES (?, ?, ?, ?)")?;
 
         for file in files {
-            trace!("Inserting {:?}", file);
+            trace!("Inserting fsentry {}", &file.name);
             let parent = Some(stmt.insert([
                 Some(file.name.clone()),
                 Some(pkgid.to_string()),

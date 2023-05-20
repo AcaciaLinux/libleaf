@@ -1,4 +1,4 @@
-use crate::{error::LError, package::installed::InstalledPackage, package::Package};
+use crate::{error::*, package::installed::InstalledPackage, package::*};
 
 use super::*;
 
@@ -96,40 +96,59 @@ impl<'a> DBTransaction<'a> {
             }
         }
 
-        // Before inserting this package, insert all of its dependencies if needed
-        for dependency in package.get_dependencies().get_resolved()? {
-            debug!(
-                "Inserting dependency {} before package {}",
-                dependency.get_fq_name(),
-                package.get_fq_name()
-            );
-            self.add_package(dependency.get_installed()?)?;
-        }
-
         // Prepare the statement and insert the package
         let mut stmt = self
             .transaction
             .prepare("INSERT INTO packages (name, version, real_version, description, hash) VALUES (?, ?, ?, ?, ?)")?;
 
-        // Store the package id for inserting the files
-        let pkgid = stmt.insert([
-            package.get_name(),
-            package.get_version(),
-            package.get_real_version().to_string(),
-            package.get_description().to_string(),
-            package.get_hash(),
-        ])?;
+        let pkgid = stmt
+            .insert([
+                package.get_name(),
+                package.get_version(),
+                package.get_real_version().to_string(),
+                package.get_description(),
+                package.get_hash(),
+            ])
+            .err_prepend(&format!("When inserting package {}", package.get_fq_name()))?;
+
+        // Insert all of the package dependencies if needed
+        for dependency in package
+            .get_dependencies()
+            .get_resolved()
+            .err_prepend(&format!(
+                "When adding dependencies of package {}",
+                package.get_fq_name()
+            ))?
+        {
+            debug!(
+                "Inserting dependency {} before package {}",
+                dependency.get_fq_name(),
+                package.get_fq_name()
+            );
+
+            let dependency = dependency.read().unwrap();
+            self.add_package(dependency.get_installed()?)?;
+        }
 
         // Add the files of the package
         self.add_files(pkgid, None, package.get_files())?;
 
         //Setup the dependency tree
+        let name = &package.get_name();
         for dependency in package.get_dependencies().get_resolved()? {
+            trace!(
+                "Inserting dependency {} <== {}",
+                name,
+                dependency.get_name()
+            );
             let dep_id = self.get_package_id(&dependency.get_name())?;
-            let mut stmt = self
-                .transaction
-                .prepare("INSERT INTO dependencies (depender, dependency) VALUES (?, ?)")?;
-            stmt.execute([pkgid, dep_id.expect("Hin")])?;
+            let mut stmt = self.transaction.prepare(
+                "INSERT OR REPLACE INTO dependencies (depender, dependency) VALUES (?, ?)",
+            )?;
+            stmt.execute([
+                pkgid,
+                dep_id.expect("Dependency id is missing, this is a BUG!"),
+            ])?;
         }
 
         Ok(())
