@@ -36,7 +36,6 @@ impl FSEntry {
 /// * `directory` - The directory to index recursively
 pub fn index(directory: &Path) -> Result<Vec<FSEntry>, LError> {
     let mut res: Vec<FSEntry> = Vec::new();
-    trace!("Indexing {}", directory.to_string_lossy());
 
     for entry in std::fs::read_dir(directory)? {
         let entry = entry?;
@@ -44,10 +43,13 @@ pub fn index(directory: &Path) -> Result<Vec<FSEntry>, LError> {
         let isdir = path.is_dir();
         let mut new_entry = FSEntry {
             name: entry.file_name().to_string_lossy().to_string(),
+            children: Vec::new(),
+            // Compute the hash:
+            // directory:   None
+            // link:        Target
+            // file:        File
             hash: {
-                if isdir {
-                    None
-                } else if path.is_symlink() {
+                if path.is_symlink() {
                     let target_path = path.read_link()?;
                     trace!(
                         "Symlink {} points to {}, hashing target",
@@ -55,11 +57,12 @@ pub fn index(directory: &Path) -> Result<Vec<FSEntry>, LError> {
                         target_path.to_string_lossy()
                     );
                     Some(util::hash::hash_str(&target_path.to_string_lossy()))
+                } else if isdir {
+                    None
                 } else {
                     Some(util::hash::hash_file(&path)?)
                 }
             },
-            children: Vec::new(),
         };
 
         new_entry.index(&path)?;
