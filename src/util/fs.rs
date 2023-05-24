@@ -1,6 +1,9 @@
 //! This module groups utility functions for interacting with the filesystem
-use crate::error::LError;
-use std::path::Path;
+use crate::error::{LError, LErrorExt};
+use std::{
+    path::{Path, PathBuf},
+    slice::Iter,
+};
 
 use crate::util;
 
@@ -70,4 +73,91 @@ pub fn index(directory: &Path) -> Result<Vec<FSEntry>, LError> {
     }
 
     Ok(res)
+}
+
+/// Copies the supplied iterator of FSEntries from the `src` directory to the `dest`
+/// directory recursively iterating over all the children.
+///
+/// The provided arguments must be mutable due to them getting modified during the
+/// copy process.
+/// Once the function exits they are restored to their original value.
+/// # Arguments
+/// * `src` - The source root directory
+/// * `dest` - The destination root directory
+/// * `iter` - The iterator of FSEntries to copy
+/// # Example
+/// ```
+/// use leaf::util::fs::*;
+/// use std::path::PathBuf;
+///
+/// //Create an entry for testing
+/// let entry = FSEntry {
+///     name: "test".to_string(),
+///     hash: None,
+///     children: Vec::new()
+/// };
+///
+/// // The entry must be wrapped in a iterator
+/// let mut entries: Vec<FSEntry> = vec![entry];
+///
+/// // The source and destination
+/// let mut src = PathBuf::from("./src");
+/// let mut dest = PathBuf::from("./dest");
+///
+/// copy_recursive(&mut src, &mut dest, &mut entries.iter()).unwrap();
+/// ```
+pub fn copy_recursive(
+    src: &mut PathBuf,
+    dest: &mut PathBuf,
+    iter: &mut Iter<FSEntry>,
+) -> Result<(), LError> {
+    for entry in iter {
+        src.push(&entry.name);
+        dest.push(&entry.name);
+
+        if entry.hash.is_none() {
+            // If the destination directory does not exist, create it
+            if !dest.exists() {
+                trace!("Creating directory {}", dest.to_string_lossy());
+                std::fs::create_dir_all(&dest).err_append(&format!(
+                    "When creating directory {}",
+                    dest.to_string_lossy()
+                ))?;
+            }
+
+            // And copy the directory contents, too
+            copy_recursive(src, dest, &mut entry.children.iter())?;
+        } else if !dest.exists() {
+            // If the source is a symlink, create it in the destination
+            if src.is_symlink() {
+                let symlink_dest = src.read_link()?;
+                trace!(
+                    "Creating symlink {} pointing to {}",
+                    dest.to_string_lossy(),
+                    symlink_dest.to_string_lossy()
+                );
+                std::os::unix::fs::symlink(symlink_dest, &dest)?;
+            } else {
+                // Else just copy the file
+                trace!(
+                    "Copying {} ==> {}",
+                    src.to_string_lossy(),
+                    dest.to_string_lossy()
+                );
+                std::fs::copy(&src, &dest)?;
+            }
+        } else {
+            // If the file does already exist, continue
+            warn!("TODO: Create handler for existing files");
+            error!("FSEntry {} does already exist", &dest.to_string_lossy());
+            return Err(LError::new(
+                crate::error::LErrorClass::IO(std::io::ErrorKind::AlreadyExists),
+                &dest.to_string_lossy(),
+            ));
+        }
+
+        src.pop();
+        dest.pop();
+    }
+    Ok(())
 }
