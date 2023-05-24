@@ -37,8 +37,8 @@ fn impl_package_macro(ast: &syn::DeriveInput) -> TokenStream {
                 self.real_version = real_version
             }
 
-            fn get_description(&self) -> &str {
-                self.description.as_str()
+            fn get_description(&self) -> String {
+                self.description.to_owned()
             }
             fn set_description(&mut self, description: &str) {
                 self.description = description.to_owned()
