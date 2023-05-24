@@ -1,11 +1,7 @@
 use super::Config;
-use crate::{
-    error::LError,
-    mirror::Mirror,
-    package::{local::LocalPackage, *},
-    util::get_root_packages,
-};
-use std::sync::{Arc, Mutex};
+use crate::{db::DBConnection, error::LError, mirror::Mirror, package::*, *};
+use std::sync::Arc;
+use std::sync::Mutex;
 use threadpool::ThreadPool;
 
 /// Updates the mirrors in the provided config
@@ -50,31 +46,41 @@ pub fn update(config: &Config, mirrors: &Vec<Mirror>) -> Result<(), Vec<LError>>
 pub fn install(config: &Config, packages: &[String], mirrors: &mut [Mirror]) -> Result<(), LError> {
     load_mirrors(config, mirrors)?;
 
-    let mut pool: Vec<Arc<PackageVariant>> = Vec::new();
-
+    // Resolve dependencies into the pool
+    let mut pool: Vec<PackageRef> = Vec::new();
     for package in packages {
         let package = crate::mirror::resolve_package(package, mirrors)?;
-        crate::util::resolve_dependencies(package, &mut pool, mirrors)?;
+        crate::util::dependencies::resolve_dependencies(package, &mut pool, mirrors)?;
     }
 
+    // Download the packages and update the pool
     let results = download_packages(config, &pool);
-    let mut local_packages: Vec<Arc<PackageVariant>> = Vec::new();
     for result in results {
         match result {
-            Ok(res) => {
-                local_packages.push(Arc::new(PackageVariant::Local(res.as_ref().clone())));
-            }
+            Ok(res) => match pool.iter().find(|p| p.get_name() == res.get_name()) {
+                Some(p) => {
+                    let mut pkg = p.write().expect("Lock package mutex");
+                    *pkg = res.read().expect("Lock results mutex").clone();
+                }
+                None => panic!(
+                    "[BUG] Could not find downloaded package in pool anymore: {}",
+                    res.get_fq_name()
+                ),
+            },
             Err(e) => {
                 return Err(e);
             }
         }
     }
 
-    let root_packages = get_root_packages(&local_packages);
+    //Get the root packages, create a database connection and install
+    let root_packages = util::dependencies::get_root_packages(&pool);
+    let mut db_con = DBConnection::open(&config.get_config_dir().join("installed.db"))?;
 
-    for pkg in root_packages {
-        let pkg = crate::util::resolve_dependencies_pool(pkg, &local_packages)?;
-        pkg.get_local()?.deploy(config)?;
+    for package_ref in &root_packages {
+        let mut pkg = package_ref.write().unwrap();
+        let installed = pkg.get_local()?.clone().install(config, &mut db_con)?;
+        *pkg = installed;
     }
 
     Ok(())
@@ -94,29 +100,32 @@ pub fn load_mirrors(config: &Config, mirrors: &mut [Mirror]) -> Result<(), LErro
 
 pub fn download_packages(
     config: &Config,
-    packages: &Vec<Arc<PackageVariant>>,
-) -> Vec<Result<Arc<LocalPackage>, LError>> {
+    packages: &Vec<PackageRef>,
+) -> Vec<Result<PackageRef, LError>> {
     let pool = ThreadPool::new(config.download_workers);
-    type Return = Vec<Result<Arc<LocalPackage>, LError>>;
+    type Return = Vec<Result<PackageRef, LError>>;
     let results: Arc<Mutex<Return>> = Arc::new(Mutex::new(vec![]));
 
     for package in packages {
         let config = config.clone();
-        let package = package.clone();
         let results = results.clone();
-        pool.execute(move || match &package.get_remote() {
-            Ok(package) => {
-                let res = package.fetch(&config);
-                results.lock().expect("Lock results mutex").push(match res {
-                    Ok(res) => Ok(Arc::new(res)),
-                    Err(e) => Err(e),
-                });
-            }
-            Err(e) => {
-                results
-                    .lock()
-                    .expect("Lock results mutex")
-                    .push(Err(e.clone()));
+        let package = package.clone();
+        pool.execute(move || {
+            let package = package.write().unwrap();
+            match &package.get_remote() {
+                Ok(package) => {
+                    let res = package.fetch(&config);
+                    results.lock().expect("Lock results mutex").push(match res {
+                        Ok(res) => Ok(res),
+                        Err(e) => Err(e),
+                    });
+                }
+                Err(e) => {
+                    results
+                        .lock()
+                        .expect("Lock results mutex")
+                        .push(Err(e.clone()));
+                }
             }
         })
     }
