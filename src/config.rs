@@ -1,7 +1,9 @@
+pub mod callbacks;
 pub mod config_file;
 pub mod dirs;
 pub mod files;
 
+use callbacks::*;
 use serde::Deserialize;
 use std::path::PathBuf;
 
@@ -55,6 +57,9 @@ pub struct Config {
     pub download_dir: Option<PathBuf>,
     /// The directory leaf should use to cache its packages (default: `/var/cache/leaf/package/`)
     pub packages_dir: Option<PathBuf>,
+
+    #[serde(skip)]
+    pub callbacks: Callbacks,
 }
 
 impl Default for Config {
@@ -72,6 +77,7 @@ impl Default for Config {
             cache_dir: None,
             download_dir: None,
             packages_dir: None,
+            callbacks: Callbacks::default(),
         }
     }
 }
