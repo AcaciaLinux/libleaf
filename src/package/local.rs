@@ -124,7 +124,10 @@ impl LocalPackage {
 
         // Copy the fsentries
         let mut iter = files.iter();
-        util::fs::copy_recursive(&mut cur_src, &mut cur_dest, &mut iter).err_prepend(&format!(
+        util::fs::copy_recursive(&mut cur_src, &mut cur_dest, &mut iter, &|path| {
+            config.callbacks.file_exists(config, path)
+        })
+        .err_prepend(&format!(
             "When copying files of package {}",
             self.get_fq_name()
         ))?;
