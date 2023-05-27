@@ -85,6 +85,7 @@ pub fn index(directory: &Path) -> Result<Vec<FSEntry>, LError> {
 /// * `src` - The source root directory
 /// * `dest` - The destination root directory
 /// * `iter` - The iterator of FSEntries to copy
+/// * `file_exists_handler` - A handler that gets called if the entry does already exist, true indicates overwrite
 /// # Example
 /// ```
 /// use leaf::util::fs::*;
@@ -104,13 +105,17 @@ pub fn index(directory: &Path) -> Result<Vec<FSEntry>, LError> {
 /// let mut src = PathBuf::from("./src");
 /// let mut dest = PathBuf::from("./dest");
 ///
-/// copy_recursive(&mut src, &mut dest, &mut entries.iter()).unwrap();
+/// copy_recursive(&mut src, &mut dest, &mut entries.iter(), &|path| false).unwrap();
 /// ```
-pub fn copy_recursive(
+pub fn copy_recursive<F>(
     src: &mut PathBuf,
     dest: &mut PathBuf,
     iter: &mut Iter<FSEntry>,
-) -> Result<(), LError> {
+    file_exists_handler: &F,
+) -> Result<(), LError>
+where
+    F: Fn(&Path) -> bool,
+{
     for entry in iter {
         src.push(&entry.name);
         dest.push(&entry.name);
@@ -126,34 +131,41 @@ pub fn copy_recursive(
             }
 
             // And copy the directory contents, too
-            copy_recursive(src, dest, &mut entry.children.iter())?;
-        } else if !dest.exists() {
+            copy_recursive(src, dest, &mut entry.children.iter(), file_exists_handler)?;
+        } else {
+            // If the destination exists, call the callback
+            if dest.is_symlink() || dest.exists() {
+                let can_overwrite = file_exists_handler(&dest);
+                if !can_overwrite {
+                    return Err(LError::new(
+                        crate::error::LErrorClass::IO(std::io::ErrorKind::AlreadyExists),
+                        &dest.to_string_lossy(),
+                    ));
+                }
+                warn!("Overwriting destination at {:?}", dest);
+                std::fs::remove_file(&dest).err_prepend("When removing file")?;
+            }
+
             // If the source is a symlink, create it in the destination
             if src.is_symlink() {
                 let symlink_dest = src.read_link()?;
-                trace!(
+                let msg = format!(
                     "Creating symlink {} pointing to {}",
                     dest.to_string_lossy(),
                     symlink_dest.to_string_lossy()
                 );
-                std::os::unix::fs::symlink(symlink_dest, &dest)?;
+                trace!("{}", &msg);
+                std::os::unix::fs::symlink(symlink_dest, &dest).err_append(&msg)?;
             } else {
                 // Else just copy the file
-                trace!(
+                let msg = format!(
                     "Copying {} ==> {}",
                     src.to_string_lossy(),
                     dest.to_string_lossy()
                 );
-                std::fs::copy(&src, &dest)?;
+                trace!("{}", &msg);
+                std::fs::copy(&src, &dest).err_append(&msg)?;
             }
-        } else {
-            // If the file does already exist, continue
-            warn!("TODO: Create handler for existing files");
-            error!("FSEntry {} does already exist", &dest.to_string_lossy());
-            return Err(LError::new(
-                crate::error::LErrorClass::IO(std::io::ErrorKind::AlreadyExists),
-                &dest.to_string_lossy(),
-            ));
         }
 
         src.pop();
