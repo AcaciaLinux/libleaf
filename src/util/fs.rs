@@ -73,11 +73,6 @@ pub fn index(directory: &Path) -> Result<Vec<FSEntry>, LError> {
             hash: {
                 if path.is_symlink() {
                     let target_path = path.read_link()?;
-                    trace!(
-                        "Symlink {} points to {}, hashing target",
-                        path.to_string_lossy(),
-                        target_path.to_string_lossy()
-                    );
                     Some(util::hash::hash_str(&target_path.to_string_lossy()))
                 } else if isdir {
                     None
