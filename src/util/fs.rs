@@ -135,7 +135,7 @@ where
         } else {
             // If the destination exists, call the callback
             if dest.is_symlink() || dest.exists() {
-                let can_overwrite = file_exists_handler(&dest);
+                let can_overwrite = file_exists_handler(dest);
                 if !can_overwrite {
                     return Err(LError::new(
                         crate::error::LErrorClass::IO(std::io::ErrorKind::AlreadyExists),
