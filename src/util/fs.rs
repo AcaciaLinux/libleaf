@@ -29,6 +29,25 @@ impl FSEntry {
         }
         Ok(())
     }
+
+    /// Appends the supplied string to create a recursive tree
+    /// # Arguments
+    /// * `depth` - The starting depth, should be 1 for a nice tree
+    /// * `string` - A mutable reference to the string to append to
+    pub fn print(&self, depth: usize, string: &mut String) {
+        let msg = " |".repeat(depth);
+        match &self.hash {
+            Some(hash) => {
+                let msg = format!("{}_ {}", &msg, self.name);
+                string.push_str(&format!("\n{:.<50}{}", &msg, hash));
+            }
+            None => string.push_str(&format!("\n{}_ {}/", &msg, self.name)),
+        }
+
+        for child in &self.children {
+            child.print(depth + 1, string);
+        }
+    }
 }
 
 /// Indexes the supplied directory into a vector of FSEntries
