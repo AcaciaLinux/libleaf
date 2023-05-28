@@ -74,13 +74,10 @@ pub fn install(config: &Config, packages: &[String], mirrors: &mut [Mirror]) -> 
     }
 
     //Get the root packages, create a database connection and install
-    let root_packages = util::dependencies::get_root_packages(&pool);
     let mut db_con = DBConnection::open(&config.get_config_dir().join("installed.db"))?;
 
-    for package_ref in &root_packages {
-        let mut pkg = package_ref.write().unwrap();
-        let installed = pkg.get_local()?.clone().install(config, &mut db_con)?;
-        *pkg = installed;
+    for package_ref in &pool {
+        util::transaction::install_package(package_ref.clone(), config, &mut db_con)?;
     }
 
     Ok(())
