@@ -1,6 +1,6 @@
 //! Some utility functions to aid the management of the leaf package manager
 
-use crate::package::Package;
+use crate::package::*;
 use crate::{config::Config, error::*};
 use serde::{Deserialize, Deserializer};
 use std::fs::File;
@@ -13,6 +13,7 @@ use xz::read::XzDecoder;
 pub mod dependencies;
 pub mod fs;
 pub mod hash;
+pub mod transaction;
 
 fn ensure_dir(dir: &PathBuf) -> Result<(), LError> {
     if !dir.exists() {
