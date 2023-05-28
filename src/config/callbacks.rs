@@ -3,7 +3,7 @@ use std::path::Path;
 use super::Config;
 
 /// A struct containing all the callbacks that leaf can make
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Callbacks {
     /// The callback for the case that a file does already exist but is not
     /// installed by leaf
@@ -13,14 +13,6 @@ pub struct Callbacks {
 impl std::fmt::Debug for Callbacks {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Callbacks (Not much to debug...)").finish()
-    }
-}
-
-impl Default for Callbacks {
-    fn default() -> Self {
-        Self {
-            cb_file_exists: None,
-        }
     }
 }
 
