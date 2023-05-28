@@ -9,7 +9,7 @@ impl<'a> DBTransaction<'a> {
     /// * `pkgid` - The package the files are owned by
     /// * `parent` - The id of the parent file id (None for root entry)
     /// * `files` - The files to add
-    pub fn add_files(
+    pub fn insert_files(
         &self,
         pkgid: i64,
         parent: Option<i64>,
@@ -27,7 +27,7 @@ impl<'a> DBTransaction<'a> {
                 parent.map(|p| p.to_string()),
                 file.hash.clone(),
             ])?);
-            self.add_files(pkgid, parent, &file.children)?;
+            self.insert_files(pkgid, parent, &file.children)?;
         }
 
         Ok(())

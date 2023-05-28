@@ -21,16 +21,24 @@ impl DBConnection {
         self.new_transaction()?.get_package_id(name)
     }
 
-    /// Add the supplied InstalledPackage to the database
+    /// Add the supplied PackageVariant to the database
     ///
-    /// The fstree of the package and its dependencies are inserted automatically.
     /// If the package in the database is already up-to-date (hash is the same),
     /// the insertion gets skipped (`Ok()`).
     /// # Arguments
     /// * `package` - The package to insert
-    pub fn add_package(&mut self, package: &InstalledPackage) -> Result<(), LError> {
+    pub fn insert_package(&mut self, package: &PackageVariant) -> Result<(), LError> {
         let transaction = self.new_transaction()?;
-        transaction.add_package(package)?;
+        transaction.insert_package(package)?;
+        transaction.commit()
+    }
+
+    /// Add the supplied PackageVariants dependencies to the database
+    /// # Arguments
+    /// * `package` - The package to insert the dependencies of
+    pub fn insert_package_dependencies(&mut self, package: &PackageVariant) -> Result<(), LError> {
+        let transaction = self.new_transaction()?;
+        transaction.insert_package_dependencies(package)?;
         transaction.commit()
     }
 }
@@ -81,7 +89,7 @@ impl<'a> DBTransaction<'a> {
     /// the insertion gets skipped (`Ok()`).
     /// # Arguments
     /// * `package` - The package to insert
-    pub fn add_package(&self, package: &InstalledPackage) -> Result<(), LError> {
+    pub fn insert_package(&self, package: &PackageVariant) -> Result<(), LError> {
         //Check if this package isn't already in the database
         if let Some(hash) = self.get_package_hash(&package.get_name())? {
             if hash == package.get_hash() {
@@ -101,55 +109,72 @@ impl<'a> DBTransaction<'a> {
             .transaction
             .prepare("INSERT INTO packages (name, version, real_version, description, hash) VALUES (?, ?, ?, ?, ?)")?;
 
-        let pkgid = stmt
-            .insert([
-                package.get_name(),
-                package.get_version(),
-                package.get_real_version().to_string(),
-                package.get_description(),
-                package.get_hash(),
-            ])
-            .err_prepend(&format!("When inserting package {}", package.get_fq_name()))?;
+        stmt.insert([
+            package.get_name(),
+            package.get_version(),
+            package.get_real_version().to_string(),
+            package.get_description(),
+            package.get_hash(),
+        ])
+        .err_prepend(&format!("When inserting package {}", package.get_fq_name()))?;
 
-        // Insert all of the package dependencies if needed
-        for dependency in package
-            .get_dependencies()
-            .get_resolved()
-            .err_prepend(&format!(
-                "When adding dependencies of package {}",
-                package.get_fq_name()
-            ))?
-        {
-            debug!(
-                "Inserting dependency {} before package {}",
-                dependency.get_fq_name(),
-                package.get_fq_name()
-            );
+        Ok(())
+    }
 
-            let dependency = dependency.read().unwrap();
-            self.add_package(dependency.get_installed()?)?;
-        }
+    pub fn insert_package_dependencies(&self, package: &PackageVariant) -> Result<(), LError> {
+        let pkgid = match self.get_package_id(&package.get_name())? {
+            Some(id) => id,
+            None => {
+                return Err(LError::new(
+                    LErrorClass::PackageNotFound,
+                    "Insert the package first",
+                ));
+            }
+        };
 
-        // Add the files of the package
-        self.add_files(pkgid, None, package.get_files())?;
-
-        //Setup the dependency tree
+        //Set up the dependency tree
         let name = &package.get_name();
         for dependency in package.get_dependencies().get_resolved()? {
-            trace!(
-                "Inserting dependency {} <== {}",
-                name,
-                dependency.get_name()
-            );
-            let dep_id = self.get_package_id(&dependency.get_name())?;
+            trace!("Inserting dependency [{}] {}", name, dependency.get_name());
+            let dep_id = match self.get_package_id(&dependency.get_name())? {
+                Some(id) => id,
+                None => {
+                    return Err(LError::new(
+                        LErrorClass::PackageNotFound,
+                        &format!(
+                            "Dependency id of [{}] {} is missing",
+                            name,
+                            dependency.get_name()
+                        ),
+                    ))
+                }
+            };
             let mut stmt = self.transaction.prepare(
                 "INSERT OR REPLACE INTO dependencies (depender, dependency) VALUES (?, ?)",
             )?;
-            stmt.execute([
-                pkgid,
-                dep_id.expect("Dependency id is missing, this is a BUG!"),
-            ])?;
+            stmt.execute([pkgid, dep_id])?;
         }
+
+        Ok(())
+    }
+
+    /// Adds the supplied files to the parent owned by the supplied package
+    /// # Arguments
+    /// * `pkgid` - The package the files are owned by
+    /// * `parent` - The id of the parent file id (None for root entry)
+    /// * `files` - The files to add
+    pub fn insert_package_files(&self, package: &InstalledPackage) -> Result<(), LError> {
+        let pkgid = match self.get_package_id(&package.get_name())? {
+            Some(id) => id,
+            None => {
+                return Err(LError::new(
+                    LErrorClass::PackageNotFound,
+                    "Insert the package first",
+                ));
+            }
+        };
+
+        self.insert_files(pkgid, None, package.get_files())?;
 
         Ok(())
     }
