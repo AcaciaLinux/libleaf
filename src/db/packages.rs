@@ -20,6 +20,23 @@ impl DBConnection {
         self.new_transaction()?.get_package_id(name)
     }
 
+    /// Creates a stub InstalledPackage.
+    /// A stub package does not contain its files.
+    ///
+    /// The files vector is empty and needs to be set manually.
+    /// # Arguments
+    /// * `name` - The name of the package to search for
+    /// * `pool` - The pool to resolve package dependencies from and insert the new package into
+    /// # Returns
+    /// None if the package hasn't been found
+    pub fn get_stub_package(
+        &mut self,
+        name: &str,
+        pool: &mut Vec<PackageRef>,
+    ) -> Result<Option<PackageRef>, LError> {
+        self.new_transaction()?.get_stub_package(name, pool)
+    }
+
     /// Add the supplied PackageVariant to the database
     ///
     /// If the package in the database is already up-to-date (hash is the same),
@@ -89,6 +106,23 @@ impl<'a> DBTransaction<'a> {
             None => Ok(None),
             Some(hash) => Ok(Some(hash?)),
         }
+    }
+
+    /// Creates a stub InstalledPackage.
+    /// A stub package does not contain its files.
+    ///
+    /// The files vector is empty and needs to be set manually.
+    /// # Arguments
+    /// * `name` - The name of the package to search for
+    /// * `pool` - The pool to resolve package dependencies from and insert the new package into
+    /// # Returns
+    /// None if the package hasn't been found
+    pub fn get_stub_package(
+        &mut self,
+        name: &str,
+        pool: &mut Vec<PackageRef>,
+    ) -> Result<Option<PackageRef>, LError> {
+        InstalledPackage::stub_from_sql(self, name, pool)
     }
 
     /// Add the supplied InstalledPackage to the database
