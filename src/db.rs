@@ -1,5 +1,5 @@
 //! A wrapper around the leaf database
-use rusqlite::{Connection, OpenFlags, Transaction};
+use rusqlite::{Connection, OpenFlags, Statement, Transaction};
 use std::path::Path;
 
 use crate::error::LError;
@@ -57,5 +57,12 @@ impl<'a> DBTransaction<'a> {
     /// Consumes this transaction and rolls the changes back
     pub fn rollback(self) -> Result<(), LError> {
         Ok(self.transaction.rollback()?)
+    }
+
+    /// Creates a new executable SQL Statement from this transaction
+    /// # Arguments
+    /// * `sql` - The statement to enclose
+    pub fn prepare(&mut self, sql: &str) -> Result<Statement, LError> {
+        Ok(self.transaction.prepare(sql)?)
     }
 }
