@@ -1,6 +1,5 @@
-use crate::{error::*, package::installed::InstalledPackage, package::*};
-
 use super::*;
+use crate::{error::*, package::installed::*, package::*};
 
 impl DBConnection {
     /// Queries the database for the package hash matching the supplied name
@@ -40,6 +39,16 @@ impl DBConnection {
         let transaction = self.new_transaction()?;
         transaction.insert_package_dependencies(package)?;
         transaction.commit()
+    }
+
+    /// Retrieves the dependencies of the package matching the supplied hash
+    ///
+    /// # Arguments
+    /// * `hash` - The hash to use for searching
+    /// # Returns
+    /// A vector of strings containing the dependency names
+    pub fn get_package_dependencies(&mut self, hash: &str) -> Result<Vec<String>, LError> {
+        self.new_transaction()?.get_package_dependencies(hash)
     }
 }
 
@@ -156,6 +165,35 @@ impl<'a> DBTransaction<'a> {
         }
 
         Ok(())
+    }
+
+    /// Retrieves the dependencies of the package matching the supplied hash
+    ///
+    /// # Arguments
+    /// * `hash` - The hash to use for searching
+    /// # Returns
+    /// A vector of strings containing the dependency names
+    pub fn get_package_dependencies(&self, hash: &str) -> Result<Vec<String>, LError> {
+        let mut stmt = self.transaction.prepare(
+            "SELECT p2.name
+                        FROM dependencies, packages p1, packages p2
+                        WHERE p1.hash = ?
+                            AND p1.id = dependencies.depender
+                            AND p2.id = dependencies.dependency;",
+        )?;
+
+        let dependencies = stmt.query_map([hash], |row| {
+            let res: String = row.get(0)?;
+            Ok(res)
+        })?;
+
+        let mut deps: Vec<String> = Vec::new();
+
+        for dep in dependencies {
+            deps.push(dep?);
+        }
+
+        Ok(deps)
     }
 
     /// Adds the supplied files to the parent owned by the supplied package
