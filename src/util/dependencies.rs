@@ -1,3 +1,4 @@
+use crate::db::DBTransaction;
 use crate::error::*;
 use crate::mirror::*;
 use crate::package::*;
@@ -12,11 +13,18 @@ pub fn resolve_dependencies(
     package: PackageRef,
     pool: &mut Vec<PackageRef>,
     mirrors: &[Mirror],
+    db: &mut DBTransaction,
 ) -> Result<(), LError> {
     // First of all, check if the package isn't already resolved
     let hash = package.get_hash();
     if pool.iter().any(|p| p.get_hash() == hash) {
         trace!("Skipping resolved package {}", package.get_fq_name());
+        return Ok(());
+    }
+
+    // Check if we have an already installed package at the system
+    if let Some(package) = db.get_stub_package(&package.get_name(), pool)? {
+        trace!("Found already installed package {}", package.get_name());
         return Ok(());
     }
 
@@ -47,7 +55,7 @@ pub fn resolve_dependencies(
             None => {
                 // If the dependency is to be resolved, query the mirrors, resolve its dependencies and push it
                 let dependency = resolve_package(dependency, mirrors)?;
-                resolve_dependencies(dependency.clone(), pool, mirrors)?;
+                resolve_dependencies(dependency.clone(), pool, mirrors, db)?;
                 new_deps.push(dependency);
             }
         }

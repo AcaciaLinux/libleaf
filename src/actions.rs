@@ -46,11 +46,19 @@ pub fn update(config: &Config, mirrors: &Vec<Mirror>) -> Result<(), Vec<LError>>
 pub fn install(config: &Config, packages: &[String], mirrors: &mut [Mirror]) -> Result<(), LError> {
     load_mirrors(config, mirrors)?;
 
+    //Create a database connection for looking up already installed packages
+    let mut db_con = DBConnection::open(&config.get_config_dir().join("installed.db"))?;
+
     // Resolve dependencies into the pool
     let mut pool: Vec<PackageRef> = Vec::new();
     for package in packages {
         let package = crate::mirror::resolve_package(package, mirrors)?;
-        crate::util::dependencies::resolve_dependencies(package, &mut pool, mirrors)?;
+        crate::util::dependencies::resolve_dependencies(
+            package,
+            &mut pool,
+            mirrors,
+            &mut db_con.new_transaction()?,
+        )?;
     }
 
     // Download the packages and update the pool
@@ -73,9 +81,7 @@ pub fn install(config: &Config, packages: &[String], mirrors: &mut [Mirror]) -> 
         }
     }
 
-    //Get the root packages, create a database connection and install
-    let mut db_con = DBConnection::open(&config.get_config_dir().join("installed.db"))?;
-
+    // Now install the packages one after the other
     for package_ref in &pool {
         util::transaction::install_package(package_ref.clone(), config, &mut db_con)?;
     }
