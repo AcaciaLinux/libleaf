@@ -1,5 +1,6 @@
 use super::Config;
 use crate::{db::DBConnection, error::LError, mirror::Mirror, package::*, *};
+use std::ops::Deref;
 use std::sync::Arc;
 use std::sync::Mutex;
 use threadpool::ThreadPool;
@@ -115,20 +116,21 @@ pub fn download_packages(
         let package = package.clone();
         pool.execute(move || {
             let package = package.write().unwrap();
-            match &package.get_remote() {
-                Ok(package) => {
+            match package.deref() {
+                PackageVariant::Remote(package) => {
                     let res = package.fetch(&config);
                     results.lock().expect("Lock results mutex").push(match res {
                         Ok(res) => Ok(res),
                         Err(e) => Err(e),
                     });
                 }
-                Err(e) => {
-                    results
-                        .lock()
-                        .expect("Lock results mutex")
-                        .push(Err(e.clone()));
+                PackageVariant::Installed(package) => {
+                    info!(
+                        "Skipping download of installed package {}",
+                        package.get_fq_name()
+                    );
                 }
+                _ => {}
             }
         })
     }
