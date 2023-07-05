@@ -1,7 +1,7 @@
 pub mod actions;
 pub mod config;
 pub mod db;
-mod download;
+pub mod download;
 pub mod error;
 pub mod mirror;
 pub mod package;

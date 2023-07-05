@@ -6,13 +6,14 @@ use curl::easy::Easy;
 use indicatif::HumanBytes;
 use std::sync::atomic::Ordering::Relaxed;
 
-///Downloads the contents of the supplied url
+/// Downloads the contents of the supplied url
+/// Returns the response code in the Ok() variant, if not 200 this returns Err()
 pub fn download<'data, F>(
     url: &str,
     message: &str,
     display_bar: bool,
     mut write_function: F,
-) -> Result<(), LError>
+) -> Result<u32, LError>
 where
     F: FnMut(&[u8]) -> bool + Send + 'data,
 {
@@ -60,7 +61,7 @@ where
         }
     }
 
-    {
+    match {
         //Create a scoped transfer and perform it
         let mut transfer = easy.transfer();
         transfer
@@ -82,14 +83,24 @@ where
         }
 
         //Perform now
-        match transfer.perform() {
-            Ok(_) => Ok(()),
-            Err(e) => {
-                if e.is_write_error() {
-                    Err(error)
-                } else {
-                    Err(LError::from(e))
-                }
+        transfer.perform()
+    } {
+        Ok(_) => {
+            let code = easy.response_code().expect("CURL response code");
+            if code < 200 || code >= 300 {
+                Err(LError::new(
+                    LErrorClass::CURLHttpNot2xx,
+                    &format!("Expected 2xx, got {}", code),
+                ))
+            } else {
+                Ok(code)
+            }
+        }
+        Err(e) => {
+            if e.is_write_error() {
+                Err(error)
+            } else {
+                Err(LError::from(e))
             }
         }
     }
