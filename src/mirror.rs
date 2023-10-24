@@ -1,8 +1,8 @@
+use crate::error::*;
 use crate::{config::Config, download, error::LError, package::RemotePackage, util};
-use log::{error, info};
+use log::{error, info, trace};
 use serde::Deserialize;
 use std::path::PathBuf;
-use crate::error::*;
 
 /// A mirror holding a package list
 #[derive(Debug, Deserialize)]
@@ -14,7 +14,7 @@ pub struct Mirror {
 
     /// The packages provided by this mirror
     #[serde(skip)]
-    pub packages: Vec<RemotePackage>,
+    pub packages: Option<Vec<RemotePackage>>,
 }
 
 impl Mirror {
@@ -27,7 +27,7 @@ impl Mirror {
             name: name.to_owned(),
             url: url.to_owned(),
 
-            packages: Vec::new(),
+            packages: None,
         }
     }
 
@@ -85,5 +85,59 @@ impl Mirror {
         info!("Updated mirror {}", &self.name);
 
         Ok(())
+    }
+
+    /// Loads the mirror data from the saved mirror file
+    /// # Arguments
+    /// * `config` - A reference to a leaf config struct for getting the mirrors directory
+    pub fn load(&mut self, config: &Config) -> Result<(), LError> {
+        info!(
+            "Loading mirror {} from {}...",
+            self.name,
+            self.get_path(config).to_string_lossy()
+        );
+
+        let data = std::fs::read_to_string(self.get_path(config))?;
+
+        #[derive(Deserialize)]
+        #[serde(transparent)]
+        struct DE {
+            data: Vec<RemotePackage>,
+        }
+
+        let buf: DE = match serde_json::from_str(&data) {
+            Ok(v) => v,
+            Err(e) => {
+                return Err(LError::new(
+                    LErrorClass::JSON,
+                    format!("When loading mirror {}: {}", self.name, e).as_str(),
+                ))
+            }
+        };
+
+        self.packages = Some(buf.data);
+
+        trace!("Packages for mirror {} ({})", self.name, self.url);
+        for package in self.get_packages().err_prepend("When listing mirror packages:")? {
+            trace!(
+                " - {}-{}-{}",
+                package.name,
+                package.version,
+                package.real_version
+            );
+        }
+
+        Ok(())
+    }
+
+    /// Returns the packages vector or an error that the mirror is not loaded
+    pub fn get_packages(&self) -> Result<&Vec<RemotePackage>, LError> {
+        match &self.packages {
+            Some(p) => Ok(p),
+            None => Err(LError::new(
+                LErrorClass::MirrorNotLoaded,
+                &format!("Mirror {} ({})", self.name, self.url),
+            )),
+        }
     }
 }
