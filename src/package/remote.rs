@@ -75,7 +75,4 @@ impl CorePackage for RemotePackage {
     fn dependencies(&self) -> &Vec<String> {
         &self.dependencies
     }
-    fn hash(&self) -> &str {
-        &self.hash
-    }
 }

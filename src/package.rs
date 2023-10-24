@@ -16,8 +16,6 @@ pub trait CorePackage {
     fn description(&self) -> &str;
     /// Return the vector of dependencies for the package
     fn dependencies(&self) -> &Vec<String>;
-    /// Return the hash value for the package
-    fn hash(&self) -> &str;
 
     /// Return the full name for the package, including the version and real_version
     fn full_name(&self) -> String {
@@ -67,13 +65,6 @@ impl CorePackage for PackageVariant {
         match self {
             PackageVariant::Remote(p) => &p.dependencies,
             PackageVariant::Local(p) => &p.dependencies,
-        }
-    }
-
-    fn hash(&self) -> &str {
-        match self {
-            PackageVariant::Remote(p) => &p.hash,
-            PackageVariant::Local(p) => &p.hash,
         }
     }
 }

@@ -40,7 +40,4 @@ impl CorePackage for LocalPackage {
     fn dependencies(&self) -> &Vec<String> {
         &self.dependencies
     }
-    fn hash(&self) -> &str {
-        &self.hash
-    }
 }
