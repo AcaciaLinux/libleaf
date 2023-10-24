@@ -1,3 +1,5 @@
+mod util;
+
 pub mod download;
 pub mod error;
 pub mod pbar;
