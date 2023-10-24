@@ -20,6 +20,7 @@ pub enum LErrorClass {
     CURLHttpNot2xx,
     JSON,
     MirrorNotLoaded,
+    PackageNotFound,
 
     IO(io::ErrorKind),
 }
@@ -86,6 +87,7 @@ impl LError {
             CURLHttpNot2xx => "HTTP response code was not 2xx",
             JSON => "Failed to parse json",
             MirrorNotLoaded => "Mirror not loaded",
+            PackageNotFound => "Package has not been found",
             IO(_) => "An IO error occured",
         }
         .to_owned()
