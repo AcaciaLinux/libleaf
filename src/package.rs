@@ -15,6 +15,11 @@ pub trait CorePackage {
     fn dependencies(&self) -> &Vec<String>;
     /// Return the hash value for the package
     fn hash(&self) -> &str;
+
+    /// Return the full name for the package, including the version and real_version
+    fn full_name(&self) -> String {
+        format!("{} {}-{}", self.name(), self.version(), self.real_version())
+    }
 }
 
 #[derive(Debug)]
