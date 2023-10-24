@@ -1,6 +1,9 @@
 mod remote;
 pub use remote::*;
 
+mod local;
+pub use local::*;
+
 /// This trait provides core information about a package
 pub trait CorePackage {
     /// Return the name of the package
@@ -27,42 +30,50 @@ pub trait CorePackage {
 pub enum PackageVariant {
     /// A remote package that can be fetched
     Remote(RemotePackage),
+    /// A local package that can be installed
+    Local(LocalPackage),
 }
 
 impl CorePackage for PackageVariant {
     fn name(&self) -> &str {
         match self {
             PackageVariant::Remote(p) => &p.name,
+            PackageVariant::Local(p) => &p.name,
         }
     }
 
     fn version(&self) -> &str {
         match self {
             PackageVariant::Remote(p) => &p.version,
+            PackageVariant::Local(p) => &p.version,
         }
     }
 
     fn real_version(&self) -> u64 {
         match self {
             PackageVariant::Remote(p) => p.real_version,
+            PackageVariant::Local(p) => p.real_version,
         }
     }
 
     fn description(&self) -> &str {
         match self {
             PackageVariant::Remote(p) => &p.description,
+            PackageVariant::Local(p) => &p.description,
         }
     }
 
     fn dependencies(&self) -> &Vec<String> {
         match self {
             PackageVariant::Remote(p) => &p.dependencies,
+            PackageVariant::Local(p) => &p.dependencies,
         }
     }
 
     fn hash(&self) -> &str {
         match self {
             PackageVariant::Remote(p) => &p.hash,
+            PackageVariant::Local(p) => &p.hash,
         }
     }
 }
