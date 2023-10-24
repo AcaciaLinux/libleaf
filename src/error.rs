@@ -29,7 +29,7 @@ pub enum LErrorClass {
 #[repr(C)]
 pub struct LError {
     pub class: LErrorClass,
-    pub message: Option<String>,
+    pub messages: Vec<String>,
 }
 
 impl LError {
@@ -39,7 +39,7 @@ impl LError {
     pub fn new_class(class: LErrorClass) -> LError {
         LError {
             class,
-            message: None,
+            messages: Vec::new(),
         }
     }
 
@@ -50,7 +50,7 @@ impl LError {
     pub fn new(class: LErrorClass, message: &str) -> LError {
         LError {
             class,
-            message: Some(message.to_owned()),
+            messages: vec![message.to_owned()],
         }
     }
 
@@ -64,10 +64,7 @@ impl LError {
     /// # Arguments
     /// * `message` - The message to prepend
     pub fn append(&mut self, message: &str) {
-        self.message = match &self.message {
-            None => Some(message.to_string()),
-            Some(error_message) => Some(format!("{}: {}", error_message, message)),
-        };
+        self.messages.push(message.to_owned());
     }
 
     /// Prepends the supplied message to the message of the error
@@ -75,10 +72,7 @@ impl LError {
     /// # Arguments
     /// * `message` - The message to prepend
     pub fn prepend(&mut self, message: &str) {
-        self.message = match &self.message {
-            None => Some(message.to_string()),
-            Some(error_message) => Some(format!("{}: {}", message, error_message)),
-        };
+        self.messages.insert(0, message.to_owned());
     }
 
     /// Converts the error class to a human-readable string
@@ -102,10 +96,13 @@ impl error::Error for LError {}
 
 impl Display for LError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &self.message {
-            Some(m) => write!(f, "{}: {}", &self.ec_str(), m),
-            None => write!(f, "{}", &self.ec_str()),
+        writeln!(f, "{}: ", &self.ec_str())?;
+
+        for (i, msg) in self.messages.iter().enumerate() {
+            writeln!(f, "{}- {}", "  ".repeat(i), msg)?;
         }
+
+        Ok(())
     }
 }
 
@@ -125,7 +122,7 @@ impl From<std::io::Error> for LError {
     fn from(value: std::io::Error) -> Self {
         LError {
             class: LErrorClass::IO(value.kind()),
-            message: Some(value.to_string()),
+            messages: vec![value.to_string()],
         }
     }
 }

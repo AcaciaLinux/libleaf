@@ -112,11 +112,11 @@ impl From<curl::Error> for LError {
     fn from(value: curl::Error) -> Self {
         LError {
             class: LErrorClass::CURL,
-            message: Some(format!(
+            messages: vec![format!(
                 "{} ({})",
                 value.description(),
                 value.extra_description().unwrap_or("")
-            )),
+            )],
         }
     }
 }

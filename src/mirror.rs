@@ -62,7 +62,7 @@ impl Mirror {
                 error!(
                     "Failed to update mirror {}: {}",
                     &self.name,
-                    e.clone().message.unwrap_or("".to_string())
+                    e
                 );
                 return Err(e);
             }
