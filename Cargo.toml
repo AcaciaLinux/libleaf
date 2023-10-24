@@ -1,0 +1,12 @@
+[package]
+name = "libleaf"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+curl = "0.4.44"
+indicatif = "0.17.7"
+log = "0.4.20"
+once_cell = "1.18.0"
