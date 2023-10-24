@@ -32,4 +32,34 @@ impl Config {
             None => self.get_config_dir().join("mirrors"),
         }
     }
+
+    /// Returns the directory where leaf should put its caches (overrides the `root_dir` default)
+    ///
+    /// Default: `root_dir/var/cache/leaf`
+    pub fn get_cache_dir(&self) -> PathBuf {
+        match &self.cache_dir {
+            Some(p) => PathBuf::from(p),
+            None => self.get_root().join("var").join("cache").join("leaf"),
+        }
+    }
+
+    /// Returns the directory where leaf should put its download caches (overrides the `cache_dir` default)
+    ///
+    /// /// Default: `cache_dir/download`
+    pub fn get_download_dir(&self) -> PathBuf {
+        match &self.download_dir {
+            Some(p) => PathBuf::from(p),
+            None => self.get_cache_dir().join("download"),
+        }
+    }
+
+    /// Returns the directory where leaf should put its package caches (overrides the `cache_dir` default)
+    ///
+    /// Default: `cache_dir/package`
+    pub fn get_packages_dir(&self) -> PathBuf {
+        match &self.packages_dir {
+            Some(p) => PathBuf::from(p),
+            None => self.get_cache_dir().join("package"),
+        }
+    }
 }
