@@ -48,7 +48,7 @@ impl Mirror {
 
         let mut buf: Vec<u8> = Vec::new();
 
-        match download::download(
+        download::download(
             &self.url,
             format!("Updating mirror {}...", self.name).as_str(),
             config.render_bar,
@@ -56,28 +56,13 @@ impl Mirror {
                 buf.extend_from_slice(data);
                 true
             },
-        ) {
-            Ok(_) => (),
-            Err(e) => {
-                error!(
-                    "Failed to update mirror {}: {}",
-                    &self.name,
-                    e
-                );
-                return Err(e);
-            }
-        }
+        )?;
 
         let reader = std::io::Cursor::new(buf);
 
         let res: serde_json::Value = match serde_json::from_reader(reader) {
             Ok(v) => v,
-            Err(e) => {
-                return Err(LError::new(
-                    LErrorClass::JSON,
-                    format!("When updating mirror {}: {}", self.name, e).as_str(),
-                ))
-            }
+            Err(e) => return Err(LError::new(LErrorClass::JSON, format!("{}", e).as_str())),
         };
 
         std::fs::write(self.get_path(config), res["payload"].to_string())?;
@@ -118,7 +103,10 @@ impl Mirror {
         self.packages = Some(buf.data);
 
         trace!("Packages for mirror {} ({})", self.name, self.url);
-        for package in self.get_packages().err_prepend("When listing mirror packages:")? {
+        for package in self
+            .get_packages()
+            .err_prepend("When listing mirror packages:")?
+        {
             trace!(
                 " - {}-{}-{}",
                 package.name,
