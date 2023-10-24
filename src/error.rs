@@ -80,17 +80,16 @@ impl LError {
     pub fn ec_str(&self) -> String {
         use LErrorClass::*;
         match self.class {
-            None => "None",
-            Unknown => "Unknown",
-            Abort => "Action was aborted",
-            CURL => "Error in CURL occured",
-            CURLHttpNot2xx => "HTTP response code was not 2xx",
-            JSON => "Failed to parse json",
-            MirrorNotLoaded => "Mirror not loaded",
-            PackageNotFound => "Package has not been found",
-            IO(_) => "An IO error occured",
+            None => "None".to_owned(),
+            Unknown => "Unknown".to_owned(),
+            Abort => "Action was aborted".to_owned(),
+            CURL => "Error in CURL occured".to_owned(),
+            CURLHttpNot2xx => "HTTP response code was not 2xx".to_owned(),
+            JSON => "Failed to parse json".to_owned(),
+            MirrorNotLoaded => "Mirror not loaded".to_owned(),
+            PackageNotFound => "Package has not been found".to_owned(),
+            IO(e) => format!("An IO error occured: {}", e),
         }
-        .to_owned()
     }
 }
 
