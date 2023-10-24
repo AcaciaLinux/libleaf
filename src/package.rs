@@ -24,6 +24,11 @@ pub trait CorePackage {
     fn full_name(&self) -> String {
         format!("{} {}-{}", self.name(), self.version(), self.real_version())
     }
+
+    /// The name for the package when it is extracted
+    fn extract_name(&self) -> String {
+        format!("{}-{}", self.name(), self.version())
+    }
 }
 
 #[derive(Debug)]
