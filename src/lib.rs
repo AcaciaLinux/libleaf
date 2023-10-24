@@ -7,6 +7,7 @@ pub mod error;
 pub mod package;
 pub mod pbar;
 
+pub mod index;
 pub mod mirror;
 
 use std::sync::atomic::AtomicBool;
