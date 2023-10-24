@@ -1,6 +1,7 @@
 use crate::error::*;
+use crate::package::{CorePackage, PackageVariant};
 use crate::{config::Config, download, error::LError, package::RemotePackage, util};
-use log::{error, info, trace};
+use log::{info, trace};
 use serde::Deserialize;
 use std::path::PathBuf;
 
@@ -14,7 +15,7 @@ pub struct Mirror {
 
     /// The packages provided by this mirror
     #[serde(skip)]
-    pub packages: Option<Vec<RemotePackage>>,
+    pub packages: Option<Vec<PackageVariant>>,
 }
 
 impl Mirror {
@@ -100,7 +101,12 @@ impl Mirror {
             }
         };
 
-        self.packages = Some(buf.data);
+        self.packages = Some(
+            buf.data
+                .into_iter()
+                .map(|p| PackageVariant::Remote(p))
+                .collect(),
+        );
 
         trace!("Packages for mirror {} ({})", self.name, self.url);
         for package in self
@@ -109,9 +115,9 @@ impl Mirror {
         {
             trace!(
                 " - {}-{}-{}",
-                package.name,
-                package.version,
-                package.real_version
+                package.name(),
+                package.version(),
+                package.real_version()
             );
         }
 
@@ -119,7 +125,7 @@ impl Mirror {
     }
 
     /// Returns the packages vector or an error that the mirror is not loaded
-    pub fn get_packages(&self) -> Result<&Vec<RemotePackage>, LError> {
+    pub fn get_packages(&self) -> Result<&Vec<PackageVariant>, LError> {
         match &self.packages {
             Some(p) => Ok(p),
             None => Err(LError::new(
