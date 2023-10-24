@@ -4,6 +4,7 @@ use crate::error::LError;
 use log::info;
 use std::path::PathBuf;
 
+pub mod extract;
 pub mod fs;
 pub mod hash;
 
