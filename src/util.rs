@@ -4,6 +4,9 @@ use crate::error::LError;
 use log::info;
 use std::path::PathBuf;
 
+pub mod fs;
+pub mod hash;
+
 /// Ensures a directory exists
 /// # Arguments
 /// * `dir` - The directory to ensure
