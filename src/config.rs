@@ -1,6 +1,9 @@
 use serde::Deserialize;
 use std::path::PathBuf;
 
+use self::callbacks::Callbacks;
+
+mod callbacks;
 mod dirs;
 
 #[derive(Debug, Deserialize, Default)]
@@ -20,9 +23,16 @@ pub struct Config {
     /// The directory leaf should use to cache its packages (default: `/var/cache/leaf/package/`)
     pub packages_dir: Option<PathBuf>,
 
+    /// If leaf should work aggressively (overwrite files, etc...)
+    pub force: Option<bool>,
+
     /// If a progress bar should be rendered or not
     #[serde(default = "default_render_bar")]
     pub render_bar: bool,
+
+    /// Callbacks that leaf can use to inform the caller or to ask for input
+    #[serde(skip)]
+    pub callbacks: Callbacks,
 }
 
 /// Provides a default for the `render_bar` field
